@@ -178,7 +178,18 @@
   .foot{padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;
     font-size:9.5px;color:var(--muted);line-height:1.55;margin-bottom:8px}
   .foot b{color:var(--amber)}
-  #loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:var(--mono);font-size:12px}
+  #loading{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:70vh;gap:12px;color:var(--muted);font-family:var(--mono);font-size:12px}
+  #loading .spl{width:118px;height:118px;border-radius:28px;box-shadow:0 0 34px rgba(255,176,32,.35);
+    animation:splp 1.6s ease-in-out infinite}
+  @keyframes splp{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  #loading .splt{font-size:18px;letter-spacing:4px;font-weight:800;color:var(--txt);font-family:var(--sans)}
+  #loading .spls{font-size:8.5px;letter-spacing:2.5px;color:var(--amber);font-weight:700;margin-top:-8px}
+  .peekwrap{position:relative;height:46px;margin-bottom:-26px;text-align:right;padding-right:22px}
+  .peek{height:82px;transform:rotate(4deg);filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+  .mhead{height:26px;margin-left:7px;vertical-align:middle}
+  .thumbA{height:36px;margin-left:2px;filter:drop-shadow(0 2px 6px rgba(38,208,124,.35))}
+  .gthumb{height:22px;vertical-align:middle;margin-left:5px}
   .toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:#1a2436;border:1px solid var(--down);color:var(--txt);padding:9px 16px;border-radius:9px;
     font-size:12px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.6)}
@@ -205,13 +216,14 @@
   </nav>
 </header>
 
-<div id="loading">◈ connecting to L.A.B.A.N. cloud…</div>
+<div id="loading"><img class="spl" src="icon-512.png" alt="L.A.B.A.N."><div class="splt">L.A.B.A.N.</div><div class="spls">LIVE AI BOT ASSET NAVIGATOR</div><div id="splc">◈ connecting to the cloud…</div></div>
 <main id="app" style="display:none">
   <div class="strip" id="strip"></div>
+  <div class="peekwrap"><img class="peek" src="w.webp" alt=""></div>
   <div class="regime" id="regime"></div>
   <div class="panel" id="brief"><div class="phead"><h2>🌅 DAILY BRIEFING</h2><span class="tag">5 QUESTIONS</span></div><div id="briefB"></div></div>
   <div class="panel" id="port"><div class="phead"><h2>💼 MY ROBINHOOD</h2><span class="tag" id="portTag"></span></div><div id="portB"></div></div>
-  <div class="panel" id="anal"><div class="phead"><h2>🔎 SYMBOL ANALYZER</h2><span class="tag">TYPE → QUEUE → ASK CLAUDE</span></div>
+  <div class="panel" id="anal"><div class="phead"><h2>🔎 SYMBOL ANALYZER<img class="mhead" src="g.webp" alt=""></h2><span class="tag">TYPE → QUEUE → ASK CLAUDE</span></div>
     <div class="qrow">
       <div class="qwrap"><input id="symIn" maxlength="24" placeholder="TICKER OR COMPANY…" autocomplete="off"><div id="dd"></div></div>
       <button class="qbtn" id="symBtn">QUEUE</button>
@@ -221,10 +233,10 @@
     <div class="ghd g">✔ COMPLETED ANALYSES · re-scanned on each daily update</div>
     <div id="analB"></div>
   </div>
-  <div class="panel" id="setups"><div class="phead"><h2>⭐ SCORED SETUPS</h2><span class="tag">MARKET-WIDE</span></div><div id="setB"></div></div>
+  <div class="panel" id="setups"><div class="phead"><h2>⭐ SCORED SETUPS<img class="mhead" src="a.webp" alt=""></h2><span class="tag">MARKET-WIDE</span></div><div id="setB"></div></div>
   <div class="panel" id="alerts"><div class="phead"><h2>🚨 ALERT FEED</h2><span class="tag">★ = TOUCHES YOUR HOLDINGS</span></div><div id="alB"></div></div>
   <div class="panel" id="movers"><div class="phead"><h2>▲▼ SESSION MOVERS</h2><span class="tag">FILTERED</span></div><div id="mvB"></div></div>
-  <div class="panel" id="edu"><div class="phead"><h2>🎓 EDUCATION MODE</h2><span class="tag">TODAY'S LESSONS</span></div><div id="eduB"></div></div>
+  <div class="panel" id="edu"><div class="phead"><h2>🎓 EDUCATION MODE<img class="mhead" src="d.webp" alt=""></h2><span class="tag">TODAY'S LESSONS</span></div><div id="eduB"></div></div>
   <div class="foot" id="foot"></div>
 </main>
 
@@ -252,8 +264,9 @@ function scoreBox(sc,g,cls){ return `<div class="score ${CLS[cls]||'sC'}"><span 
 function cardHTML(c){
   const dcls = c.dd>0?'up':c.dd<0?'down':'muted';
   const scls = c.std>0?'up':c.std<0?'down':'a';
+  const thumb = c.cls==='A' ? '<img class="thumbA" src="t.webp" alt="">' : '';
   return `<div class="card">
-    <div class="chead">${scoreBox(c.sc,c.g,c.cls)}
+    <div class="chead">${scoreBox(c.sc,c.g,c.cls)}${thumb}
       <div><div class="tk">${esc(c.sym)}</div><div class="nm">${esc(c.nm)}</div><div class="stance ${scls}">${esc(c.stance)}</div></div>
       <div class="pxr"><div class="p">${esc(c.px)}</div><div class="d ${dcls}">${esc(c.d)}</div></div>
     </div>
@@ -291,7 +304,8 @@ function render(){
       <div class="read"><b>READ:</b> ${esc(sp.read)}</div></div>`).join('') +
     (p.groups||[]).map(gr=>{
       const gc = gr.cls==='A'?'g':gr.cls==='B'?'b':gr.cls==='C'?'a':gr.cls==='D'?'r':'muted';
-      return `<div class="ghd ${gc}">${esc(gr.h)}</div>` + gr.rows.map(r=>
+      const gt = gr.cls==='A' && gr.rows.length ? ' <img class="gthumb" src="t.webp" alt="">' : '';
+      return `<div class="ghd ${gc}">${esc(gr.h)}${gt}</div>` + gr.rows.map(r=>
         `<div class="h"><div class="gchip ${CLS[r.cls]||'sC'}">${esc(r.sc)}</div>
           <div class="hmid"><div class="tk" style="font-size:12px">${esc(r.sym)} <span class="qty">${esc(r.qty)}</span></div>
             <div class="nm">${esc(r.nm)}</div>${r.note?`<div class="note">${esc(r.note)}</div>`:''}</div>
@@ -322,7 +336,7 @@ window.LB = {
     SNAP_TS = ts; setSync('on','synced'); render();
   },
   gotTicks(list){ TICKS = list || []; },
-  syncState(st, tx){ setSync(st, tx); if(st==='err' && !SNAP){ $('loading').textContent='◈ '+tx; } }
+  syncState(st, tx){ setSync(st, tx); if(st==='err' && !SNAP){ const c=$('splc'); if(c) c.textContent='◈ '+tx; } }
 };
 
 // offline fallback: never leave the user on a blank screen
