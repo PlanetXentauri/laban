@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>L.A.B.A.N. — Live AI Bot Asset Navigator</title>
+<style>
+  :root{
+    --bg:#0b0d12; --panel:#10151e; --panel2:#0c111a; --line:#1c2632;
+    --txt:#e7edf4; --muted:#8091a3; --dim:#5a6b7b;
+    --up:#26d07c; --down:#ff5765; --amber:#ffb020; --blue:#4aa3ff; --violet:#a884ff;
+    --mono:"SF Mono",ui-monospace,"Roboto Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:14px;
+    line-height:1.4;-webkit-font-smoothing:antialiased;
+    padding:0 max(10px,env(safe-area-inset-left)) calc(20px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right))}
+  .up{color:var(--up)} .down{color:var(--down)} .a{color:var(--amber)} .b{color:var(--blue)}
+  .r{color:var(--down)} .g{color:var(--up)} .v{color:var(--violet)} .muted{color:var(--muted)}
+
+  header{position:sticky;top:0;z-index:100;background:rgba(11,13,18,.92);backdrop-filter:blur(12px);
+    padding:calc(8px + env(safe-area-inset-top)) 4px 0;border-bottom:1px solid var(--line);margin:0 -10px 10px;
+    padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+  .hrow{display:flex;align-items:center;gap:10px;padding-bottom:8px}
+  #fresh{width:40px;height:40px;border-radius:10px;cursor:pointer;font-size:18px;flex-shrink:0;
+    background:rgba(255,176,32,.10);border:1.5px solid rgba(255,176,32,.55);color:var(--amber);
+    box-shadow:0 0 10px rgba(255,176,32,.25);transition:all .25s}
+  #fresh.green{background:rgba(38,208,124,.12);border-color:rgba(38,208,124,.6);color:var(--up);box-shadow:0 0 12px rgba(38,208,124,.35)}
+  #fresh.red{background:rgba(255,87,101,.12);border-color:rgba(255,87,101,.6);color:var(--down);box-shadow:0 0 12px rgba(255,87,101,.35)}
+  .brand h1{font-size:15px;letter-spacing:2px;font-weight:800;line-height:1.1}
+  .brand .mean{font-size:7.5px;color:var(--amber);letter-spacing:1.8px;font-weight:700}
+  .hstat{margin-left:auto;text-align:right;font-family:var(--mono);font-size:9.5px;color:var(--muted);line-height:1.4}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#666;vertical-align:middle;margin-right:4px}
+  .dot.on{background:var(--up);box-shadow:0 0 7px var(--up);animation:pulse 2s infinite}
+  .dot.err{background:var(--down);box-shadow:0 0 7px var(--down)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  nav{display:flex;gap:6px;overflow-x:auto;padding:0 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav a{flex-shrink:0;font-size:10.5px;font-weight:700;letter-spacing:.5px;color:var(--muted);
+    padding:5px 11px;border-radius:14px;border:1px solid var(--line);background:var(--panel);text-decoration:none;white-space:nowrap}
+  nav a.on{color:var(--amber);border-color:rgba(255,176,32,.5)}
+
+  .strip{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .strip::-webkit-scrollbar{display:none}
+  .idx{flex:0 0 auto;min-width:86px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+  .idx .k{font-size:9px;color:var(--muted);letter-spacing:1px}
+  .idx .v2{font-family:var(--mono);font-size:14px;font-weight:700}
+  .idx .c{font-family:var(--mono);font-size:10px}
+  .regime{background:linear-gradient(90deg,#141a12,#10151e);border:1px solid #2a331d;border-radius:8px;
+    padding:8px 12px;font-size:11.5px;margin-bottom:10px;line-height:1.4}
+  .regime b{color:var(--amber);font-size:9px;letter-spacing:1px;display:block;margin-bottom:2px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px;scroll-margin-top:110px}
+  .phead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;
+    background:var(--panel2);border-bottom:1px solid var(--line)}
+  .phead h2{font-size:11.5px;letter-spacing:1.2px;font-weight:800}
+  .phead .tag{font-size:8.5px;color:var(--muted);font-family:var(--mono);text-align:right}
+
+  .bq{padding:10px 12px;border-bottom:1px solid #131a24}
+  .bq:last-child{border-bottom:none}
+  .bq h3{font-size:9.5px;letter-spacing:1px;color:var(--amber);margin-bottom:4px}
+  .bq p{font-size:12px;line-height:1.45}
+
+  .psum{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)}
+  .ps{padding:8px 10px;border-right:1px solid #131a24;border-bottom:1px solid #131a24}
+  .ps .k{font-size:8px;letter-spacing:.8px;color:var(--muted)}
+  .ps .v2{font-family:var(--mono);font-size:13.5px;font-weight:700;margin-top:1px}
+  .warn{padding:7px 12px;background:rgba(255,176,32,.07);border-bottom:1px solid rgba(255,176,32,.25);font-size:10.5px;color:var(--amber);line-height:1.4}
+  .spa{padding:10px 12px;border-bottom:1px solid var(--line)}
+  .sprow{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+  .score{width:38px;height:38px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);flex-shrink:0}
+  .score .n{font-size:14px;font-weight:800;line-height:1}
+  .score .g2{font-size:8px;font-weight:700;margin-top:1px}
+  .sA{background:rgba(38,208,124,.12);border:1px solid rgba(38,208,124,.4);color:var(--up)}
+  .sB{background:rgba(74,163,255,.10);border:1px solid rgba(74,163,255,.35);color:var(--blue)}
+  .sC{background:rgba(255,176,32,.10);border:1px solid rgba(255,176,32,.35);color:var(--amber)}
+  .sD,.sF{background:rgba(255,87,101,.10);border:1px solid rgba(255,87,101,.35);color:var(--down)}
+  .tk{font-family:var(--mono);font-weight:800;font-size:13px}
+  .nm{font-size:10px;color:var(--muted)}
+  .pxr{margin-left:auto;text-align:right;font-family:var(--mono)}
+  .pxr .p{font-size:12.5px;font-weight:700}
+  .pxr .d{font-size:9.5px}
+  .read{font-size:10.5px;line-height:1.45;background:#0b1018;border-left:3px solid var(--amber);padding:6px 9px;border-radius:0 6px 6px 0}
+  .read b{color:var(--amber)}
+
+  .ghd{padding:5px 12px;font-size:9px;letter-spacing:1.2px;font-weight:700;background:#0b1018;border-bottom:1px solid #131a24}
+  .h{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #131a24}
+  .h:last-child{border-bottom:none}
+  .gchip{font-family:var(--mono);font-size:9px;font-weight:800;text-align:center;padding:3px 0;border-radius:5px;width:44px;flex-shrink:0}
+  .hmid{flex:1;min-width:0}
+  .hmid .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hmid .note{font-size:9px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hmid .qty{font-size:8.5px;color:var(--dim);font-family:var(--mono)}
+  .hr{text-align:right;font-family:var(--mono);flex-shrink:0}
+  .hr .last{font-size:11px;color:var(--muted)}
+  .hr .pcs{font-size:11px;font-weight:700}
+
+  .card{border-bottom:1px solid var(--line);padding:0 0 10px}
+  .card:last-child{border-bottom:none}
+  .chead{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--panel2);border-bottom:1px solid var(--line);margin-bottom:8px}
+  .stance{font-size:9px;font-weight:700;letter-spacing:.6px}
+  .duo{display:grid;grid-template-columns:1fr;gap:6px;padding:0 12px;margin-bottom:7px}
+  @media(min-width:640px){.duo{grid-template-columns:1fr 1fr}}
+  .case{padding:7px 9px;border-radius:7px;font-size:10.5px;line-height:1.4}
+  .bull{background:rgba(38,208,124,.06);border:1px solid rgba(38,208,124,.18)}
+  .bear{background:rgba(255,87,101,.06);border:1px solid rgba(255,87,101,.18)}
+  .case b{font-size:8.5px;letter-spacing:1px;display:block;margin-bottom:2px}
+  .bull b{color:var(--up)} .bear b{color:var(--down)}
+  .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0 12px;margin-bottom:7px}
+  .m{background:#0b1018;border:1px solid #131a24;border-radius:6px;padding:5px 6px}
+  .m .k{font-size:7.5px;letter-spacing:.6px;color:var(--dim)}
+  .m .v2{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:1px}
+  .levels{display:flex;gap:5px;flex-wrap:wrap;font-family:var(--mono);font-size:9px;padding:0 12px;margin-bottom:7px}
+  .lv{padding:3px 7px;border-radius:5px;border:1px solid #223047;background:#121a28}
+  .prob{display:flex;align-items:center;gap:7px;font-size:9.5px;color:var(--muted);padding:0 12px;margin-bottom:7px}
+  .pbar{flex:1;height:5px;border-radius:3px;background:rgba(255,87,101,.25);overflow:hidden}
+  .pbar i{display:block;height:100%;background:var(--up);border-radius:3px}
+  .op{font-size:10.5px;line-height:1.45;background:#0b1018;border-left:3px solid var(--amber);padding:6px 9px;border-radius:0 6px 6px 0;margin:0 12px}
+  .op b{color:var(--amber)}
+  .antag{font-family:var(--mono);font-size:8px;color:var(--dim)}
+
+  .qrow{display:flex;gap:7px;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}
+  .qwrap{position:relative;flex:1;min-width:170px}
+  .qwrap input{width:100%;background:#0b1018;border:1px solid #223047;border-radius:7px;color:var(--txt);
+    font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:1px;padding:9px 12px;text-transform:uppercase;outline:none}
+  .qwrap input:focus{border-color:var(--amber)}
+  #dd{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:60;background:#0d1420;border:1px solid #2a3a52;
+    border-radius:8px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.6);display:none}
+  .ditem{display:flex;gap:9px;align-items:baseline;padding:8px 11px;cursor:pointer;border-bottom:1px solid #131a24;font-size:11.5px}
+  .ditem:last-child{border-bottom:none}
+  .ditem .ds{font-family:var(--mono);font-weight:800;font-size:12.5px;min-width:52px}
+  .ditem .dn{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ditem.act{background:#1a2436}
+  .ditem.act .ds{color:var(--amber)}
+  .dnone{padding:8px 11px;font-size:10px;color:var(--dim)}
+  .qbtn{background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.45);color:var(--amber);
+    font-size:11px;font-weight:700;letter-spacing:1px;padding:9px 14px;border-radius:7px;cursor:pointer}
+  .qhint{font-size:9.5px;color:var(--muted);line-height:1.4;padding:8px 12px;border-bottom:1px solid var(--line)}
+  .qhint b{color:var(--amber)}
+  #queue{padding:0 12px}
+  #queue:not(:empty){padding:9px 12px;border-bottom:1px solid var(--line)}
+  .qchip{display:flex;align-items:center;gap:7px;background:#121a28;border:1px solid #223047;border-radius:7px;
+    padding:7px 10px;font-size:10.5px;margin-bottom:5px;flex-wrap:wrap}
+  .qchip .qs{font-family:var(--mono);font-weight:800;color:var(--amber);font-size:12px}
+  .qchip .qcmd{font-family:var(--mono);color:var(--blue)}
+  .qcopy{margin-left:auto;background:none;border:1px solid #223047;color:var(--muted);font-size:9px;padding:3px 8px;border-radius:5px;cursor:pointer}
+  .qx{background:none;border:none;color:var(--dim);cursor:pointer;font-size:12px}
+
+  .al{display:flex;gap:8px;align-items:flex-start;padding:8px 12px;border-bottom:1px solid #131a24}
+  .al:last-child{border-bottom:none}
+  .al .tx{font-size:11px;line-height:1.35;flex:1}
+  .al .lb{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+  .lr{background:rgba(255,87,101,.12);color:var(--down);border:1px solid rgba(255,87,101,.3)}
+  .lv2{background:rgba(168,132,255,.12);color:var(--violet);border:1px solid rgba(168,132,255,.3)}
+  .la{background:rgba(255,176,32,.12);color:var(--amber);border:1px solid rgba(255,176,32,.3)}
+  .lg{background:rgba(38,208,124,.12);color:var(--up);border:1px solid rgba(38,208,124,.3)}
+  .lb2{background:rgba(74,163,255,.12);color:var(--blue);border:1px solid rgba(74,163,255,.3)}
+
+  .mv{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #131a24}
+  .mv:last-child{border-bottom:none}
+  .mv .pct{margin-left:auto;font-family:var(--mono);font-size:12px;font-weight:700;flex-shrink:0}
+  .mv .px2{font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0}
+
+  .lesson{padding:10px 12px;border-bottom:1px solid #131a24;font-size:11px;line-height:1.45}
+  .lesson:last-child{border-bottom:none}
+  .lesson h4{font-size:9.5px;letter-spacing:.8px;color:var(--violet);margin-bottom:4px}
+  .lesson .st{margin-bottom:3px;color:var(--muted)}
+  .lesson .st b{color:var(--txt)}
+  .lesson .mk{color:var(--down)}
+
+  .foot{padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    font-size:9.5px;color:var(--muted);line-height:1.55;margin-bottom:8px}
+  .foot b{color:var(--amber)}
+  #loading{text-align:center;padding:60px 20px;color:var(--muted);font-family:var(--mono);font-size:12px}
+  .toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    background:#1a2436;border:1px solid var(--down);color:var(--txt);padding:9px 16px;border-radius:9px;
+    font-size:12px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <button id="fresh" title="Check data freshness">◈</button>
+    <div class="brand">
+      <h1>L.A.B.A.N.</h1>
+      <div class="mean">LIVE AI BOT ASSET NAVIGATOR</div>
+    </div>
+    <div class="hstat">
+      <span><span class="dot" id="sync"></span><span id="syncTx">connecting…</span></span><br>
+      <span id="sessTx">—</span><br>
+      <span id="freshTx" style="color:var(--amber)">press ◈ to verify</span>
+    </div>
+  </div>
+  <nav id="nav">
+    <a href="#brief" class="on">🌅 BRIEF</a><a href="#port">💼 PORTFOLIO</a><a href="#anal">🔎 ANALYZER</a>
+    <a href="#setups">⭐ SETUPS</a><a href="#alerts">🚨 ALERTS</a><a href="#movers">▲▼ MOVERS</a><a href="#edu">🎓 LESSONS</a>
+  </nav>
+</header>
+
+<div id="loading">◈ connecting to L.A.B.A.N. cloud…</div>
+<main id="app" style="display:none">
+  <div class="strip" id="strip"></div>
+  <div class="regime" id="regime"></div>
+  <div class="panel" id="brief"><div class="phead"><h2>🌅 DAILY BRIEFING</h2><span class="tag">5 QUESTIONS</span></div><div id="briefB"></div></div>
+  <div class="panel" id="port"><div class="phead"><h2>💼 MY ROBINHOOD</h2><span class="tag" id="portTag"></span></div><div id="portB"></div></div>
+  <div class="panel" id="anal"><div class="phead"><h2>🔎 SYMBOL ANALYZER</h2><span class="tag">TYPE → QUEUE → ASK CLAUDE</span></div>
+    <div class="qrow">
+      <div class="qwrap"><input id="symIn" maxlength="24" placeholder="TICKER OR COMPANY…" autocomplete="off"><div id="dd"></div></div>
+      <button class="qbtn" id="symBtn">QUEUE</button>
+    </div>
+    <div class="qhint"><b>How it works:</b> queue a symbol here, then tell Claude <b>"grade SYMBOL"</b> in your Cowork chat. The full scored card appears below after the next update. Every Robinhood symbol works; queue is saved on this device.</div>
+    <div id="queue"></div>
+    <div class="ghd g">✔ COMPLETED ANALYSES · re-scanned on each daily update</div>
+    <div id="analB"></div>
+  </div>
+  <div class="panel" id="setups"><div class="phead"><h2>⭐ SCORED SETUPS</h2><span class="tag">MARKET-WIDE</span></div><div id="setB"></div></div>
+  <div class="panel" id="alerts"><div class="phead"><h2>🚨 ALERT FEED</h2><span class="tag">★ = TOUCHES YOUR HOLDINGS</span></div><div id="alB"></div></div>
+  <div class="panel" id="movers"><div class="phead"><h2>▲▼ SESSION MOVERS</h2><span class="tag">FILTERED</span></div><div id="mvB"></div></div>
+  <div class="panel" id="edu"><div class="phead"><h2>🎓 EDUCATION MODE</h2><span class="tag">TODAY'S LESSONS</span></div><div id="eduB"></div></div>
+  <div class="foot" id="foot"></div>
+</main>
+
+<script>
+// ================= UI LAYER (runs even if Firebase SDK fails to load) =================
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CLS = {A:'sA',B:'sB',C:'sC',D:'sD',F:'sF'};
+const LBCLS = {r:'lr',v:'lv2',a:'la',g:'lg',b:'lb2'};
+const MC = {b:'b',r:'r',a:'a',g:'g','':''};
+let SNAP = null, SNAP_TS = null, TICKS = [];
+
+function toast(msg){
+  const t = document.createElement('div'); t.className='toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(), 4200);
+}
+function setSync(state, tx){
+  const d = $('sync'); d.className = 'dot' + (state==='on'?' on':state==='err'?' err':'');
+  $('syncTx').textContent = tx;
+}
+function reveal(){ $('loading').style.display='none'; $('app').style.display='block'; }
+
+function scoreBox(sc,g,cls){ return `<div class="score ${CLS[cls]||'sC'}"><span class="n">${esc(sc)}</span><span class="g2">${esc(g)}</span></div>`; }
+
+function cardHTML(c){
+  const dcls = c.dd>0?'up':c.dd<0?'down':'muted';
+  const scls = c.std>0?'up':c.std<0?'down':'a';
+  return `<div class="card">
+    <div class="chead">${scoreBox(c.sc,c.g,c.cls)}
+      <div><div class="tk">${esc(c.sym)}</div><div class="nm">${esc(c.nm)}</div><div class="stance ${scls}">${esc(c.stance)}</div></div>
+      <div class="pxr"><div class="p">${esc(c.px)}</div><div class="d ${dcls}">${esc(c.d)}</div></div>
+    </div>
+    <div class="duo"><div class="case bull"><b>BULL CASE</b>${esc(c.bull)}</div><div class="case bear"><b>BEAR CASE</b>${esc(c.bear)}</div></div>
+    <div class="meta">${(c.meta||[]).map(m=>`<div class="m"><div class="k">${esc(m[0])}</div><div class="v2 ${MC[m[2]]||''}">${esc(m[1])}</div></div>`).join('')}</div>
+    <div class="levels">${(c.levels||[]).map(l=>`<span class="lv">${esc(l)}</span>`).join('')}</div>
+    <div class="prob"><span>MODEL LEAN</span><div class="pbar"><i style="width:${+c.lean||0}%"></i></div><span class="${c.lean>=55?'up':c.lean>=45?'a':'down'}">${+c.lean||0}% bullish</span></div>
+    <div class="op"><b>OPINION:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
+  </div>`;
+}
+
+function render(){
+  if(!SNAP) return;
+  const s = SNAP;
+  $('sessTx').textContent = s.session || '';
+  $('strip').innerHTML = (s.indices||[]).map(i=>
+    `<div class="idx"><div class="k">${esc(i.k)}</div><div class="v2">${esc(i.v)}</div><div class="c ${i.d>0?'up':i.d<0?'down':'muted'}">${esc(i.c)}</div></div>`).join('');
+  $('regime').innerHTML = `<b>⚑ REGIME</b>${esc(s.regime)}`;
+  $('briefB').innerHTML = (s.briefing||[]).map(b=>`<div class="bq"><h3>${esc(b.h)}</h3><p>${esc(b.t)}</p></div>`).join('');
+
+  const p = s.portfolio||{};
+  $('portTag').textContent = p.label||'';
+  $('portB').innerHTML =
+    `<div class="psum">
+      <div class="ps"><div class="k">TOTAL</div><div class="v2">${esc(p.total)}</div></div>
+      <div class="ps"><div class="k">EQUITY</div><div class="v2">${esc(p.equity)}</div></div>
+      <div class="ps"><div class="k">CASH</div><div class="v2 up">${esc(p.cash)}</div></div>
+      <div class="ps"><div class="k">UNREALIZED P/L</div><div class="v2 down">${esc(p.pl)}</div></div>
+      <div class="ps" style="grid-column:span 2"><div class="k">PORTFOLIO GRADE</div><div class="v2 a">${esc(p.grade)}</div></div>
+    </div>
+    <div class="warn">${esc(p.warn)}</div>` +
+    (p.spot||[]).map(sp=>`<div class="spa"><div class="sprow">${scoreBox(sp.sc,sp.g,sp.cls)}
+      <div><div class="tk">${esc(sp.sym)}</div><div class="nm">${esc(sp.nm)}</div></div>
+      <div class="pxr"><div class="p">${esc(sp.px)}</div><div class="d ${sp.dd>0?'up':'down'}">${esc(sp.d)}</div></div></div>
+      <div class="read"><b>READ:</b> ${esc(sp.read)}</div></div>`).join('') +
+    (p.groups||[]).map(gr=>{
+      const gc = gr.cls==='A'?'g':gr.cls==='B'?'b':gr.cls==='C'?'a':gr.cls==='D'?'r':'muted';
+      return `<div class="ghd ${gc}">${esc(gr.h)}</div>` + gr.rows.map(r=>
+        `<div class="h"><div class="gchip ${CLS[r.cls]||'sC'}">${esc(r.sc)}</div>
+          <div class="hmid"><div class="tk" style="font-size:12px">${esc(r.sym)} <span class="qty">${esc(r.qty)}</span></div>
+            <div class="nm">${esc(r.nm)}</div>${r.note?`<div class="note">${esc(r.note)}</div>`:''}</div>
+          <div class="hr"><div class="last">${esc(r.last)}</div>
+            <div class="pcs ${String(r.day).startsWith('+')?'up':'down'}">${esc(r.day)} <span class="${String(r.pl).startsWith('+')?'up':'down'}">· ${esc(r.pl)}</span></div></div>
+        </div>`).join('');
+    }).join('');
+
+  $('analB').innerHTML = (s.analyzer||[]).map(cardHTML).join('') || '<div class="dnone" style="padding:12px">No analyses yet — queue a symbol above.</div>';
+  $('setB').innerHTML = (s.setups||[]).map(cardHTML).join('');
+  $('alB').innerHTML = (s.alerts||[]).map(a=>
+    `<div class="al"><span>${esc(a.ic)}</span><span class="tx">${esc(a.t)}</span><span class="lb ${LBCLS[a.cls]||'lb2'}">${esc(a.lb)}</span></div>`).join('');
+  const mv = s.movers||{g:[],l:[]};
+  $('mvB').innerHTML = `<div class="ghd g">GAINERS</div>` + mv.g.map(x=>
+      `<div class="mv"><span class="tk" style="font-size:12px">${esc(x.sym)}</span><div class="hmid"><div class="nm">${esc(x.nm)}</div>${x.why?`<div class="note">${esc(x.why)}</div>`:''}</div><span class="px2">${esc(x.px)}</span><span class="pct up">${esc(x.pct)}</span></div>`).join('') +
+    `<div class="ghd r">LOSERS</div>` + mv.l.map(x=>
+      `<div class="mv"><span class="tk" style="font-size:12px">${esc(x.sym)}</span><div class="hmid"><div class="nm">${esc(x.nm)}</div>${x.why?`<div class="note">${esc(x.why)}</div>`:''}</div><span class="px2">${esc(x.px)}</span><span class="pct down">${esc(x.pct)}</span></div>`).join('');
+  $('eduB').innerHTML = (s.lessons||[]).map(l=>
+    `<div class="lesson"><h4>${esc(l.h)}</h4>${(l.steps||[]).map(st=>`<div class="st"><b>${esc(st[0])}:</b> ${esc(st[1])}</div>`).join('')}<div class="st mk"><b>Mistake to avoid:</b> ${esc(l.mistake)}</div></div>`).join('');
+  $('foot').innerHTML = `<b>METHODOLOGY & DISCLAIMER:</b> ${esc(s.foot)} <b>◈</b> verifies freshness against the last cloud update; new data arrives via Claude's daily 7:30 AM CT run or on request.`;
+  reveal();
+}
+
+// hooks the Firebase module calls into
+window.LB = {
+  gotSnapshot(jsonStr, ts){
+    try { SNAP = JSON.parse(jsonStr); } catch(e){ setSync('err','bad snapshot'); toast('Snapshot parse error'); return; }
+    SNAP_TS = ts; setSync('on','synced'); render();
+  },
+  gotTicks(list){ TICKS = list || []; },
+  syncState(st, tx){ setSync(st, tx); if(st==='err' && !SNAP){ $('loading').textContent='◈ '+tx; } }
+};
+
+// offline fallback: never leave the user on a blank screen
+setTimeout(()=>{ if(!SNAP){ reveal(); setSync('err','offline / no data');
+  toast('No cloud data yet — sections fill when sync connects'); } }, 6000);
+
+// ---- freshness button ----
+const fmt = d => d.toLocaleString('en-US',{timeZone:'America/Chicago',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) + ' CT';
+const dayCT = d => d.toLocaleDateString('en-US',{timeZone:'America/Chicago'});
+$('fresh').addEventListener('click', () => {
+  const now = new Date(), ftx = $('freshTx');
+  if (!SNAP_TS){ ftx.textContent='no data'; ftx.style.color='var(--down)'; $('fresh').className='red'; return; }
+  const ageH = (now - SNAP_TS)/36e5;
+  if (dayCT(now) === dayCT(SNAP_TS)){ $('fresh').className='green'; ftx.textContent=`FRESH ✓ ${fmt(SNAP_TS)}`; ftx.style.color='var(--up)'; }
+  else if (ageH < 30){ $('fresh').className=''; ftx.textContent=`AGING · ${fmt(SNAP_TS)}`; ftx.style.color='var(--amber)'; }
+  else { $('fresh').className='red'; ftx.textContent=`STALE ✗ · ${fmt(SNAP_TS)}`; ftx.style.color='var(--down)'; }
+});
+
+// ---- analyzer typeahead + device-local queue (localStorage, lb_ prefix) ----
+const QKEY='lb_queue';
+let matches=[], act=-1;
+let saved=[]; try{ saved=JSON.parse(localStorage.getItem(QKEY)||'[]'); }catch(e){}
+function persist(){ try{ localStorage.setItem(QKEY, JSON.stringify(saved)); }catch(e){} }
+function search(q){
+  q=q.toUpperCase(); const pre=[],nm=[];
+  for(const t of TICKS){
+    if(t[0]===q) pre.unshift(t);
+    else if(t[0].indexOf(q)===0) pre.push(t);
+    else if(t[1].toUpperCase().indexOf(q)!==-1) nm.push(t);
+    if(pre.length>12) break;
+  }
+  return pre.concat(nm).slice(0,8);
+}
+function renderDD(){
+  const dd=$('dd'), q=$('symIn').value.trim();
+  if(!matches.length){ dd.innerHTML = q?`<div class="dnone">No quick-list match for "${esc(q.toUpperCase())}" — Enter queues it anyway. Any Robinhood symbol works.</div>`:''; dd.style.display=q?'block':'none'; return; }
+  dd.innerHTML = matches.map((t,i)=>`<div class="ditem${i===act?' act':''}" data-i="${i}"><span class="ds">${esc(t[0])}</span><span class="dn">${esc(t[1])}</span></div>`).join('');
+  dd.style.display='block';
+  dd.querySelectorAll('.ditem').forEach(el=>el.addEventListener('mousedown',e=>{e.preventDefault();pick(matches[+el.dataset.i]);}));
+}
+function hideDD(){ $('dd').style.display='none'; act=-1; }
+function pick(t){ addQ(t[0], t[1], false); $('symIn').value=''; matches=[]; hideDD(); }
+function addQ(sym,name,custom){
+  if(saved.some(x=>x.s===sym)) { toast(sym+' already queued'); return; }
+  saved.push({s:sym,n:name||'',c:!!custom}); persist(); drawQ();
+}
+function drawQ(){
+  $('queue').innerHTML = saved.map((x,i)=>`<div class="qchip"><span class="qs">${esc(x.s)}</span>`+
+    (x.c?`<span class="a">custom — graded as typed</span>`:`<span class="muted">${esc(x.n)}</span>`)+
+    `<span class="qcmd">"grade ${esc(x.s)}"</span><button class="qcopy" data-i="${i}">COPY</button><button class="qx" data-i="${i}">✕</button></div>`).join('');
+  $('queue').querySelectorAll('.qcopy').forEach(b=>b.addEventListener('click',function(){
+    const cmd='grade '+saved[+this.dataset.i].s; const btn=this;
+    (navigator.clipboard?navigator.clipboard.writeText(cmd):Promise.reject())
+      .then(()=>{btn.textContent='COPIED ✓';}).catch(()=>{btn.textContent=cmd;});
+  }));
+  $('queue').querySelectorAll('.qx').forEach(b=>b.addEventListener('click',function(){
+    saved.splice(+this.dataset.i,1); persist(); drawQ();
+  }));
+}
+drawQ();
+$('symIn').addEventListener('input',()=>{ const q=$('symIn').value.trim(); matches=q?search(q):[]; act=matches.length?0:-1; renderDD(); });
+$('symIn').addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'&&matches.length){act=(act+1)%matches.length;renderDD();e.preventDefault();}
+  else if(e.key==='ArrowUp'&&matches.length){act=(act-1+matches.length)%matches.length;renderDD();e.preventDefault();}
+  else if(e.key==='Escape'){hideDD();}
+  else if(e.key==='Enter'){e.preventDefault();
+    if(act>=0&&matches[act])pick(matches[act]);
+    else{const s=$('symIn').value.trim().toUpperCase().replace(/[^A-Z.\-]/g,''); if(s){addQ(s,null,true);$('symIn').value='';matches=[];hideDD();}}}
+});
+$('symIn').addEventListener('blur',()=>setTimeout(hideDD,150));
+$('symBtn').addEventListener('click',()=>{
+  if(act>=0&&matches[act]){pick(matches[act]);return;}
+  const s=$('symIn').value.trim().toUpperCase().replace(/[^A-Z.\-]/g,''); if(s){addQ(s,null,true);$('symIn').value='';matches=[];hideDD();}
+});
+
+// ---- section nav highlight ----
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',function(){
+  document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on')); this.classList.add('on');
+}));
+</script>
+
+<script type="module">
+// ================= CLOUD LAYER (Firebase Firestore, lb_ prefix) =================
+try{
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
+  const { getFirestore, collection, query, orderBy, limit, onSnapshot, doc } =
+    await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBs8jZeW96DsumVVpK1mANVDvg6-LqUILg",
+    authDomain: "todo-107e0.firebaseapp.com",
+    projectId: "todo-107e0",
+    storageBucket: "todo-107e0.firebasestorage.app",
+    messagingSenderId: "1001442592988",
+    appId: "1:1001442592988:web:1c73371e2a069b4bbd8c19"
+  };
+  const db = getFirestore(initializeApp(firebaseConfig));
+
+  onSnapshot(query(collection(db,'lb_snapshots'), orderBy('createdAt','desc'), limit(1)), snap => {
+    if (snap.empty){ window.LB.syncState('err','no data in cloud yet'); return; }
+    const d = snap.docs[0].data();
+    window.LB.gotSnapshot(d.json, d.createdAt && d.createdAt.toDate ? d.createdAt.toDate() : null);
+  }, err => window.LB.syncState('err','sync error: '+err.code));
+
+  onSnapshot(doc(db,'lb_meta','ticks'), dd => {
+    if (dd.exists()){ try{ window.LB.gotTicks(JSON.parse(dd.data().json).list); }catch(e){} }
+  }, ()=>{});
+}catch(e){
+  window.LB.syncState('err','cloud SDK unreachable');
+}
+</script>
+</body>
+</html>
