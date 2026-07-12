@@ -195,6 +195,15 @@
   .toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
     background:#1a2436;border:1px solid var(--down);color:var(--txt);padding:9px 16px;border-radius:9px;
     font-size:12px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+  .toast.def{border-color:rgba(255,176,32,.6);max-width:min(92vw,420px);line-height:1.5}
+  .psub{padding:7px 12px;font-size:10.5px;color:var(--muted);background:#0b1018;border-bottom:1px solid #131a24;line-height:1.5}
+  .gl{border-bottom:1px dotted rgba(255,176,32,.75);cursor:help}
+  details.guide{background:var(--panel);border:1px solid rgba(255,176,32,.4);border-radius:10px;margin-bottom:12px;overflow:hidden}
+  details.guide summary{cursor:pointer;padding:11px 12px;font-size:11.5px;font-weight:800;letter-spacing:1px;color:var(--amber);list-style:none}
+  details.guide summary::-webkit-details-marker{display:none}
+  details.guide .gb{padding:2px 12px 12px;font-size:12px;line-height:1.55}
+  details.guide .gb p{margin-bottom:9px}
+  details.guide .gb b{color:var(--amber)}
 </style>
 </head>
 <body>
@@ -224,9 +233,19 @@
   <div class="strip" id="strip"></div>
   <div class="peekwrap"><img class="peek" src="w.webp" alt=""></div>
   <div class="regime" id="regime"></div>
-  <div class="panel" id="brief"><div class="phead"><h2>🌅 DAILY BRIEFING</h2><span class="tag">5 QUESTIONS</span></div><div id="briefB"></div></div>
-  <div class="panel" id="port"><div class="phead"><h2>💼 MY ROBINHOOD</h2><span class="tag" id="portTag"></span></div><div id="portB"></div></div>
+  <details class="guide"><summary>🤔 NEW HERE? TAP FOR THE 60-SECOND TOUR</summary><div class="gb">
+    <p><b>What this app does:</b> every morning the L.A.B.A.N. robot reads the market news, checks your Robinhood account, and turns it all into simple report cards — so you can see what deserves your attention without wading through jargon.</p>
+    <p><b>The score (0–100):</b> how strong a stock looks right now. 80+ = <b>A</b> (strong), 65–79 = <b>B</b> (decent), 50–64 = <b>C</b> (so-so), under 50 = <b>D/F</b> (weak — be careful).</p>
+    <p><b>Every card shows both sides:</b> the best reasons the price could go <b>UP</b> and the best reasons it could go <b>DOWN</b>. Never just the hype.</p>
+    <p><b>MODEL LEAN:</b> the robot's overall tilt, as a percent. "65% bullish" means leaning positive — a lean, not a promise.</p>
+    <p><b>LEVELS:</b> prices worth watching. Support is a floor where buyers stepped in before; resistance is a ceiling where sellers showed up.</p>
+    <p><b>Dotted words:</b> anything <span class="gl" data-def="Exactly like this! Tap any dotted word anywhere in the app and you get its plain-English meaning.">underlined like this</span> is trader-speak — tap it for a plain-English meaning.</p>
+    <p><b>Remember:</b> this is research, not financial advice. Nothing here trades for you — you are always the pilot.</p>
+  </div></details>
+  <div class="panel" id="brief"><div class="phead"><h2>🌅 DAILY BRIEFING</h2><span class="tag">5 QUESTIONS</span></div><div class="psub">The five questions that matter today — answered in plain English.</div><div id="briefB"></div></div>
+  <div class="panel" id="port"><div class="phead"><h2>💼 MY ROBINHOOD</h2><span class="tag" id="portTag"></span></div><div class="psub">Your real account. Every stock you own gets a report-card grade — A is strong, F is weak.</div><div id="portB"></div></div>
   <div class="panel" id="anal"><div class="phead"><h2>🔎 SYMBOL ANALYZER<img class="mhead" src="g.webp" alt=""></h2><span class="tag">TYPE → QUEUE → ASK CLAUDE</span></div>
+    <div class="psub">Curious about any stock? Type its name and the robot grades it just like the cards below.</div>
     <div class="qrow">
       <div class="qwrap"><input id="symIn" maxlength="24" placeholder="TICKER OR COMPANY…" autocomplete="off"><div id="dd"></div></div>
       <button class="qbtn" id="symBtn">QUEUE</button>
@@ -236,10 +255,10 @@
     <div class="ghd g">✔ COMPLETED ANALYSES · re-scanned on each daily update</div>
     <div id="analB"></div>
   </div>
-  <div class="panel" id="setups"><div class="phead"><h2>⭐ SCORED SETUPS<img class="mhead" src="a.webp" alt=""></h2><span class="tag">MARKET-WIDE</span></div><div id="setB"></div></div>
-  <div class="panel" id="alerts"><div class="phead"><h2>🚨 ALERT FEED</h2><span class="tag">★ = TOUCHES YOUR HOLDINGS</span></div><div id="alB"></div></div>
-  <div class="panel" id="movers"><div class="phead"><h2>▲▼ SESSION MOVERS</h2><span class="tag">FILTERED</span></div><div id="mvB"></div></div>
-  <div class="panel" id="edu"><div class="phead"><h2>🎓 EDUCATION MODE<img class="mhead" src="d.webp" alt=""></h2><span class="tag">TODAY'S LESSONS</span></div><div id="eduB"></div></div>
+  <div class="panel" id="setups"><div class="phead"><h2>⭐ SCORED SETUPS<img class="mhead" src="a.webp" alt=""></h2><span class="tag">WHOLE MARKET · GRADED</span></div><div class="psub">Stock ideas the robot flagged across the whole market — each scored 0–100 with the case for AND against.</div><div id="setB"></div></div>
+  <div class="panel" id="alerts"><div class="phead"><h2>🚨 ALERT FEED</h2><span class="tag">★ = A STOCK YOU OWN</span></div><div class="psub">Quick heads-ups from the news. A ★ means it touches a stock you actually own.</div><div id="alB"></div></div>
+  <div class="panel" id="movers"><div class="phead"><h2>▲▼ SESSION MOVERS</h2><span class="tag">WITH REASONS</span></div><div class="psub">Today's biggest winners and losers — and why they moved.</div><div id="mvB"></div></div>
+  <div class="panel" id="edu"><div class="phead"><h2>🎓 EDUCATION MODE<img class="mhead" src="d.webp" alt=""></h2><span class="tag">TODAY'S LESSONS</span></div><div class="psub">One bite-size lesson a day — learn the game while you play it.</div><div id="eduB"></div></div>
   <div class="foot" id="foot"></div>
 </main>
 
@@ -252,9 +271,9 @@ const LBCLS = {r:'lr',v:'lv2',a:'la',g:'lg',b:'lb2'};
 const MC = {b:'b',r:'r',a:'a',g:'g','':''};
 let SNAP = null, SNAP_TS = null, TICKS = [];
 
-function toast(msg){
-  const t = document.createElement('div'); t.className='toast'; t.textContent = msg;
-  document.body.appendChild(t); setTimeout(()=>t.remove(), 4200);
+function toast(msg, ms, cls){
+  const t = document.createElement('div'); t.className='toast'+(cls?' '+cls:''); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(), ms||4200);
 }
 function setSync(state, tx){
   const d = $('sync'); d.className = 'dot' + (state==='on'?' on':state==='err'?' err':'');
@@ -273,13 +292,84 @@ function cardHTML(c){
       <div><div class="tk">${esc(c.sym)}</div><div class="nm">${esc(c.nm)}</div><div class="stance ${scls}">${esc(c.stance)}</div></div>
       <div class="pxr"><div class="p">${esc(c.px)}</div><div class="d ${dcls}">${esc(c.d)}</div></div>
     </div>
-    <div class="duo"><div class="case bull"><b>BULL CASE</b>${esc(c.bull)}</div><div class="case bear"><b>BEAR CASE</b>${esc(c.bear)}</div></div>
+    <div class="duo"><div class="case bull"><b>▲ WHY IT COULD GO UP</b>${esc(c.bull)}</div><div class="case bear"><b>▼ WHY IT COULD GO DOWN</b>${esc(c.bear)}</div></div>
     <div class="meta">${(c.meta||[]).map(m=>`<div class="m"><div class="k">${esc(m[0])}</div><div class="v2 ${MC[m[2]]||''}">${esc(m[1])}</div></div>`).join('')}</div>
     <div class="levels">${(c.levels||[]).map(l=>`<span class="lv">${esc(l)}</span>`).join('')}</div>
     <div class="prob"><span>MODEL LEAN</span><div class="pbar"><i style="width:${+c.lean||0}%"></i></div><span class="${c.lean>=55?'up':c.lean>=45?'a':'down'}">${+c.lean||0}% bullish</span></div>
-    <div class="op"><b>OPINION:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
+    <div class="op"><b>ROBOT'S TAKE:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
   </div>`;
 }
+
+const GLOSS = {
+  'model lean':"Model lean = the robot's overall tilt: the % chance it leans toward the price going UP.",
+  'unrealized p/l':"Unrealized P/L = profit or loss on paper. You haven't sold yet, so it isn't locked in.",
+  'price target':"Price target = the price an analyst believes the stock is headed to.",
+  'risk/reward':"Risk/reward = what you could lose vs. what you could win. 1:3 means risking $1 to maybe make $3.",
+  'stop-loss':"Stop-loss = a pre-set exit price that limits your loss if the trade goes wrong.",
+  'follow-through':"Follow-through = the move kept going the next day instead of fizzling — a sign it's real.",
+  'large-cap':"Large-cap = a very big company, usually worth $10 billion or more.",
+  'microcap':"Microcap = a tiny company. Prices can swing wildly — extra risky.",
+  'premarket':"Premarket = trading that happens before the market's normal open (8:30 AM Central).",
+  'resistance':"Resistance = a price ceiling where sellers showed up before. Breaking above it is a big deal.",
+  'breakout':"Breakout = the price finally pushes above a level it kept failing at. Often starts a fast move.",
+  'oversold':"Oversold = fell so fast it might be due for a bounce.",
+  'overbought':"Overbought = rose so fast it might be due for a breather.",
+  'catalyst':"Catalyst = a news event with the power to move the price (earnings, FDA ruling, big contract).",
+  'guidance':"Guidance = what the company says it expects to earn next. Often moves the stock more than the results.",
+  'liquidity':"Liquidity = how easily you can buy or sell without moving the price. More = safer trading.",
+  'momentum':"Momentum = how strongly the price keeps moving in one direction.",
+  'rotation':"Rotation = money leaving one group of stocks and flowing into another.",
+  'earnings':"Earnings = the company's quarterly report card. Prices often jump or drop when it lands.",
+  'coiling':"Coiling = the price squeezing into a tighter and tighter range — often right before a big move.",
+  'bullish':"Bullish = expecting prices to go UP.",
+  'bearish':"Bearish = expecting prices to go DOWN.",
+  'squeeze':"Squeeze = traders betting against a stock all rush to exit at once, shooting the price up fast.",
+  'support':"Support = a price floor where buyers stepped in before.",
+  'options':"Options = side-bets on where a stock will go. Watching them shows where the big money leans.",
+  'hedged':"Hedged = holding insurance trades that soften losses if the market falls.",
+  'volume':"Volume = how many shares changed hands. Heavy volume means a move has real interest behind it.",
+  'equity':"Equity = the value of the stocks you own.",
+  'whale':"Whale = a very large trader making an unusually big bet.",
+  'hedge':"Hedge = an insurance trade that softens your losses if things go the wrong way.",
+  'setup':"Setup = a situation where price and news line up to suggest a possible trade.",
+  'calls':"Calls = bets that a price will RISE.",
+  'puts':"Puts = bets that a price will FALL.",
+  'tape':"Tape = trader slang for the flow of prices. A 'flat tape' is a quiet, sideways market.",
+  'ipo':"IPO = a company selling its shares to the public for the first time.",
+  'rsi':"RSI = a momentum meter from 0–100. Above 70 can mean overheated; below 30 can mean beaten-down.",
+  'atr':"ATR = the stock's average daily wiggle in dollars — how much it typically moves in one day.",
+  'pt':"PT = price target: where an analyst thinks the stock is going."
+};
+const GLOSS_RX = new RegExp('\\b(' + Object.keys(GLOSS).sort((a,b)=>b.length-a.length)
+  .map(k=>k.replace(/[.*+?^${}()|[\]\\\/]/g,'\\$&')).join('|') + ')\\b','gi');
+function glossify(root){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  const nodes = []; let n;
+  while(n = walker.nextNode()){
+    const p = n.parentElement;
+    if(!p || p.closest('.gl,script,style,input,button,.tk,.qs')) continue;
+    GLOSS_RX.lastIndex = 0;
+    if(GLOSS_RX.test(n.nodeValue)) nodes.push(n);
+  }
+  for(const node of nodes){
+    const s = node.nodeValue, frag = document.createDocumentFragment();
+    let last = 0, m; GLOSS_RX.lastIndex = 0;
+    while(m = GLOSS_RX.exec(s)){
+      frag.appendChild(document.createTextNode(s.slice(last, m.index)));
+      const sp = document.createElement('span'); sp.className = 'gl';
+      sp.textContent = m[0]; sp.dataset.t = m[0].toLowerCase();
+      frag.appendChild(sp); last = m.index + m[0].length;
+    }
+    frag.appendChild(document.createTextNode(s.slice(last)));
+    node.parentNode.replaceChild(frag, node);
+  }
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('.gl'); if(!g) return;
+  const def = g.dataset.def || GLOSS[g.dataset.t];
+  if(def) toast(def, 7500, 'def');
+});
+glossify(document.querySelector('.guide'));
 
 function render(){
   if(!SNAP) return;
@@ -287,7 +377,7 @@ function render(){
   $('sessTx').textContent = s.session || '';
   $('strip').innerHTML = (s.indices||[]).map(i=>
     `<div class="idx"><div class="k">${esc(i.k)}</div><div class="v2">${esc(i.v)}</div><div class="c ${i.d>0?'up':i.d<0?'down':'muted'}">${esc(i.c)}</div></div>`).join('');
-  $('regime').innerHTML = `<b>⚑ REGIME</b>${esc(s.regime)}`;
+  $('regime').innerHTML = `<b>⚑ MARKET MOOD · what trading feels like today</b>${esc(s.regime)}`;
   $('briefB').innerHTML = (s.briefing||[]).map(b=>`<div class="bq"><h3>${esc(b.h)}</h3><p>${esc(b.t)}</p></div>`).join('');
 
   const p = s.portfolio||{};
@@ -304,7 +394,7 @@ function render(){
     (p.spot||[]).map(sp=>`<div class="spa"><div class="sprow">${scoreBox(sp.sc,sp.g,sp.cls)}
       <div><div class="tk">${esc(sp.sym)}</div><div class="nm">${esc(sp.nm)}</div></div>
       <div class="pxr"><div class="p">${esc(sp.px)}</div><div class="d ${sp.dd>0?'up':'down'}">${esc(sp.d)}</div></div></div>
-      <div class="read"><b>READ:</b> ${esc(sp.read)}</div></div>`).join('') +
+      <div class="read"><b>THE ROBOT SAYS:</b> ${esc(sp.read)}</div></div>`).join('') +
     (p.groups||[]).map(gr=>{
       const gc = gr.cls==='A'?'g':gr.cls==='B'?'b':gr.cls==='C'?'a':gr.cls==='D'?'r':'muted';
       const gt = gr.cls==='A' && gr.rows.length ? ' <img class="gthumb" src="t.webp" alt="">' : '';
@@ -328,7 +418,8 @@ function render(){
       `<div class="mv"><span class="tk" style="font-size:12px">${esc(x.sym)}</span><div class="hmid"><div class="nm">${esc(x.nm)}</div>${x.why?`<div class="note">${esc(x.why)}</div>`:''}</div><span class="px2">${esc(x.px)}</span><span class="pct down">${esc(x.pct)}</span></div>`).join('');
   $('eduB').innerHTML = (s.lessons||[]).map(l=>
     `<div class="lesson"><h4>${esc(l.h)}</h4>${(l.steps||[]).map(st=>`<div class="st"><b>${esc(st[0])}:</b> ${esc(st[1])}</div>`).join('')}<div class="st mk"><b>Mistake to avoid:</b> ${esc(l.mistake)}</div></div>`).join('');
-  $('foot').innerHTML = `<b>METHODOLOGY & DISCLAIMER:</b> ${esc(s.foot)} <b>◈</b> verifies freshness against the last cloud update; new data arrives via Claude's daily 7:30 AM CT run or on request.`;
+  $('foot').innerHTML = `<b>METHODOLOGY & DISCLAIMER:</b> ${esc(s.foot)} <b>◈</b> verifies freshness against the last cloud update; new data arrives via Claude's daily 7:30 AM CT run or on request. Tap any <span class="gl" data-def="Yep — just like this! Every dotted word in the app gives you a plain-English meaning.">dotted word</span> for its meaning.`;
+  glossify($('app'));
   reveal();
 }
 
