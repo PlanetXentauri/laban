@@ -53,6 +53,14 @@
   .idx .k{font-size:9px;color:var(--muted);letter-spacing:1px}
   .idx .v2{font-family:var(--mono);font-size:14px;font-weight:700}
   .idx .c{font-family:var(--mono);font-size:10px}
+  .rhx{cursor:pointer;border-color:rgba(204,255,0,.4);min-width:132px;-webkit-tap-highlight-color:transparent;transition:border-color .3s,box-shadow .3s}
+  .rhx.ok{border-color:rgba(38,208,124,.65);box-shadow:0 0 12px rgba(38,208,124,.3)}
+  .rhrow{display:flex;align-items:center;gap:6px;margin:2px 0 1px}
+  .rhlogo{height:15px;width:15px;fill:#ccff00;flex-shrink:0}
+  .rhx.spin .rhlogo{animation:rhspin .8s linear infinite}
+  @keyframes rhspin{to{transform:rotate(360deg)}}
+  #rhState{font-size:11.5px;font-weight:800;letter-spacing:.6px;font-family:var(--mono)}
+  #rhState.ok{color:var(--up);text-shadow:0 0 10px rgba(38,208,124,.85)}
   .regime{background:linear-gradient(90deg,#141a12,#10151e);border:1px solid #2a331d;border-radius:8px;
     padding:8px 12px;font-size:11.5px;margin-bottom:10px;line-height:1.4}
   .regime b{color:var(--amber);font-size:9px;letter-spacing:1px;display:block;margin-bottom:2px}
@@ -293,6 +301,7 @@ function setSync(state, tx){
   const d = $('sync'); d.className = 'dot' + (state==='on'?' on':state==='err'?' err':'');
   $('syncTx').textContent = tx;
   document.querySelectorAll('.gsync').forEach(e=>e.classList.toggle('ok', state==='on'));
+  window.__SYNCST = state;
 }
 function mastStatus(txt, color){ const m = $('mastInfo'); if(m){ m.textContent = txt; m.style.color = color || 'var(--muted)'; } }
 function reveal(){ $('loading').style.display='none'; $('app').style.display='block'; }
@@ -387,12 +396,41 @@ document.addEventListener('click', e => {
 });
 glossify(document.querySelector('.guide'));
 
+let RH_ST = {s:'SYNC', sub:'tap to check', cls:'', col:'var(--muted)'};
+function rhTile(){
+  return '<div class="idx rhx '+RH_ST.cls+'" id="rhTile" role="button" title="Check Robinhood Agentic sync">'+
+    '<div class="k">ROBINHOOD \u00b7 AGENTIC</div>'+
+    '<div class="rhrow"><svg class="rhlogo" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.84 24h.53c.096 0 .192-.048.224-.128C7.591 13.696 11.94 8.656 14.67 5.638c.112-.128.064-.225-.096-.225h-4.88a.55.55 0 0 0-.45.225L5.746 9.972c-.514.642-.642 1.236-.642 2.086v4.43c-1.14 3.194-1.862 5.361-2.392 7.32-.032.125.016.192.129.192M20.447.646c-.754-.802-4.157-.834-5.73-.224a3 3 0 0 0-.786.465 41 41 0 0 0-3.323 3.178c-.112.113-.064.225.097.225h5.409c.497 0 .786.289.786.786v6.1c0 .16.128.208.225.064l3.258-4.254c.53-.69.69-.898.835-1.861.192-1.413.08-3.58-.77-4.479m-6.982 16.18 2.231-3.676a.7.7 0 0 0 .064-.29V6.73c0-.16-.112-.225-.224-.097-3.355 3.74-5.971 7.672-8.395 12.407-.06.12.016.225.16.177l5.009-1.54c.565-.174.882-.402 1.155-.852"/></svg>'+
+    '<span id="rhState" class="'+RH_ST.cls+'">'+RH_ST.s+'</span></div>'+
+    '<div class="c" id="rhSub" style="color:'+RH_ST.col+'">'+RH_ST.sub+'</div></div>';
+}
+function rhCheck(){
+  const tile = $('rhTile'); if(!tile || tile.classList.contains('spin')) return;
+  tile.classList.add('spin'); tile.classList.remove('ok');
+  const st = $('rhState'), sb = $('rhSub');
+  st.className=''; st.textContent='\u2026'; sb.textContent='checking cloud\u2026'; sb.style.color='var(--amber)';
+  if (window.LBC && window.LBC.rhPing) window.LBC.rhPing();
+  setTimeout(()=>{
+    tile.classList.remove('spin');
+    const live = window.__SYNCST==='on' && !!SNAP;
+    if (live){
+      const when = SNAP_TS ? 'RH data \u00b7 '+fmt(SNAP_TS) : 'live link up';
+      RH_ST = {s:'SYNCED \u2713', sub:when, cls:'ok', col:'var(--up)'};
+      tile.classList.add('ok'); st.className='ok'; st.textContent=RH_ST.s;
+      sb.textContent=when; sb.style.color='var(--up)';
+    } else {
+      RH_ST = {s:'OFFLINE \u2717', sub:'no cloud link', cls:'', col:'var(--down)'};
+      st.className=''; st.style.color='var(--down)'; st.textContent=RH_ST.s;
+      sb.textContent=RH_ST.sub; sb.style.color='var(--down)';
+    }
+  }, 900);
+}
 function render(){
   if(!SNAP) return;
   const s = SNAP;
   $('sessTx').textContent = s.session || '';
   $('strip').innerHTML = (s.indices||[]).map(i=>
-    `<div class="idx"><div class="k">${esc(i.k)}</div><div class="v2">${esc(i.v)}</div><div class="c ${i.d>0?'up':i.d<0?'down':'muted'}">${esc(i.c)}</div></div>`).join('');
+    `<div class="idx"><div class="k">${esc(i.k)}</div><div class="v2">${esc(i.v)}</div><div class="c ${i.d>0?'up':i.d<0?'down':'muted'}">${esc(i.c)}</div></div>`).join('') + rhTile();
   $('regime').innerHTML = `<b>⚑ MARKET MOOD · what trading feels like today</b>${esc(s.regime)}`;
   $('briefB').innerHTML = (s.briefing||[]).map(b=>`<div class="bq"><h3>${esc(b.h)}</h3><p>${esc(b.t)}</p></div>`).join('');
 
@@ -539,6 +577,8 @@ $('symBtn').addEventListener('click',()=>{
   const s=$('symIn').value.trim().toUpperCase().replace(/[^A-Z.\-]/g,''); if(s){addQ(s,null,true);$('symIn').value='';matches=[];hideDD();}
 });
 
+$('strip').addEventListener('click', e => { if (e.target.closest('#rhTile')) rhCheck(); });
+
 // ---- section nav highlight ----
 document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',function(){
   document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on')); this.classList.add('on');
@@ -549,7 +589,7 @@ document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',functio
 // ================= CLOUD LAYER (Firebase Firestore, lb_ prefix) =================
 try{
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
-  const { getFirestore, collection, query, orderBy, limit, onSnapshot, doc } =
+  const { getFirestore, collection, query, orderBy, limit, onSnapshot, doc, setDoc, serverTimestamp } =
     await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
 
   const firebaseConfig = {
@@ -571,6 +611,8 @@ try{
   onSnapshot(doc(db,'lb_meta','ticks'), dd => {
     if (dd.exists()){ try{ window.LB.gotTicks(JSON.parse(dd.data().json).list); }catch(e){} }
   }, ()=>{});
+
+  window.LBC = { rhPing(){ setDoc(doc(db,'lb_meta','rh_refresh'), {requestedAt: serverTimestamp(), from:'pwa'}).catch(()=>{}); } };
 }catch(e){
   window.LB.syncState('err','cloud SDK unreachable');
 }
