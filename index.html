@@ -61,6 +61,11 @@
   @keyframes rhspin{to{transform:rotate(360deg)}}
   #rhState{font-size:11.5px;font-weight:800;letter-spacing:.6px;font-family:var(--mono)}
   #rhState.ok{color:var(--up);text-shadow:0 0 10px rgba(38,208,124,.85)}
+  .rhhead{height:15px;width:15px;vertical-align:-3px;margin-right:5px}
+  .rhstate2{font-family:var(--mono);font-size:9.5px;font-weight:800;letter-spacing:.6px;color:var(--muted);margin-left:8px}
+  .rhstate2.ok{color:var(--up);text-shadow:0 0 10px rgba(38,208,124,.85)}
+  .rhlogo.spinl{animation:rhspin .8s linear infinite;transform-origin:center}
+  .toast.okk{border-color:rgba(38,208,124,.6)}
   .regime{background:linear-gradient(90deg,#141a12,#10151e);border:1px solid #2a331d;border-radius:8px;
     padding:8px 12px;font-size:11.5px;margin-bottom:10px;line-height:1.4}
   .regime b{color:var(--amber);font-size:9px;letter-spacing:1px;display:block;margin-bottom:2px}
@@ -265,7 +270,7 @@
     <p><b>Remember:</b> this is research, not financial advice. Nothing here trades for you — you are always the pilot.</p>
   </div></details>
   <div class="panel" id="brief"><div class="phead"><h2>🌅 DAILY BRIEFING</h2><span class="tag">5 QUESTIONS</span></div><div class="psub">The five questions that matter today — answered in plain English.</div><div id="briefB"></div></div>
-  <div class="panel" id="port"><div class="phead"><h2>💼 MY ROBINHOOD</h2><span class="tag" id="portTag"></span></div><div class="psub">Your real account. Every stock you own gets a report-card grade — A is strong, F is weak.</div><div id="portB"></div></div>
+  <div class="panel" id="port"><div class="phead"><h2 id="rhHead" style="cursor:pointer" title="Tap to check Robinhood sync"><svg class="rhlogo rhhead" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.84 24h.53c.096 0 .192-.048.224-.128C7.591 13.696 11.94 8.656 14.67 5.638c.112-.128.064-.225-.096-.225h-4.88a.55.55 0 0 0-.45.225L5.746 9.972c-.514.642-.642 1.236-.642 2.086v4.43c-1.14 3.194-1.862 5.361-2.392 7.32-.032.125.016.192.129.192M20.447.646c-.754-.802-4.157-.834-5.73-.224a3 3 0 0 0-.786.465 41 41 0 0 0-3.323 3.178c-.112.113-.064.225.097.225h5.409c.497 0 .786.289.786.786v6.1c0 .16.128.208.225.064l3.258-4.254c.53-.69.69-.898.835-1.861.192-1.413.08-3.58-.77-4.479m-6.982 16.18 2.231-3.676a.7.7 0 0 0 .064-.29V6.73c0-.16-.112-.225-.224-.097-3.355 3.74-5.971 7.672-8.395 12.407-.06.12.016.225.16.177l5.009-1.54c.565-.174.882-.402 1.155-.852"/></svg>MY ROBINHOOD<span class="rhstate2" id="rhState2">· SYNC</span></h2><span class="tag" id="portTag"></span></div><div class="psub">Your real account. Every stock you own gets a report-card grade — A is strong, F is weak.</div><div id="portB"></div></div>
   <div class="panel" id="anal"><div class="phead"><h2>🔎 SYMBOL ANALYZER<img class="mhead" src="g.webp" alt=""></h2><span class="tag">TYPE → QUEUE → ASK CLAUDE</span></div>
     <div class="psub">Curious about any stock? Type its name and the robot grades it just like the cards below.</div>
     <div class="qrow">
@@ -302,6 +307,8 @@ function setSync(state, tx){
   $('syncTx').textContent = tx;
   document.querySelectorAll('.gsync').forEach(e=>e.classList.toggle('ok', state==='on'));
   window.__SYNCST = state;
+  const r2 = $('rhState2');
+  if (r2 && !window.__RHBUSY){ r2.textContent = state==='on' ? '\u00b7 SYNCED \u2713' : '\u00b7 SYNC'; r2.classList.toggle('ok', state==='on'); }
 }
 function mastStatus(txt, color){ const m = $('mastInfo'); if(m){ m.textContent = txt; m.style.color = color || 'var(--muted)'; } }
 function reveal(){ $('loading').style.display='none'; $('app').style.display='block'; }
@@ -405,23 +412,33 @@ function rhTile(){
     '<div class="c" id="rhSub" style="color:'+RH_ST.col+'">'+RH_ST.sub+'</div></div>';
 }
 function rhCheck(){
-  const tile = $('rhTile'); if(!tile || tile.classList.contains('spin')) return;
-  tile.classList.add('spin'); tile.classList.remove('ok');
-  const st = $('rhState'), sb = $('rhSub');
-  st.className=''; st.textContent='\u2026'; sb.textContent='checking cloud\u2026'; sb.style.color='var(--amber)';
+  if (window.__RHBUSY) return;
+  window.__RHBUSY = true;
+  const tile = $('rhTile'), st = $('rhState'), sb = $('rhSub'), r2 = $('rhState2');
+  document.querySelectorAll('.rhlogo').forEach(l=>l.classList.add('spinl'));
+  if (tile){ tile.classList.remove('ok'); }
+  if (st){ st.className=''; st.textContent='\u2026'; }
+  if (sb){ sb.textContent='checking cloud\u2026'; sb.style.color='var(--amber)'; }
+  if (r2){ r2.classList.remove('ok'); r2.textContent='\u00b7 \u2026'; }
   if (window.LBC && window.LBC.rhPing) window.LBC.rhPing();
   setTimeout(()=>{
-    tile.classList.remove('spin');
+    window.__RHBUSY = false;
+    document.querySelectorAll('.rhlogo').forEach(l=>l.classList.remove('spinl'));
     const live = window.__SYNCST==='on' && !!SNAP;
     if (live){
       const when = SNAP_TS ? 'RH data \u00b7 '+fmt(SNAP_TS) : 'live link up';
       RH_ST = {s:'SYNCED \u2713', sub:when, cls:'ok', col:'var(--up)'};
-      tile.classList.add('ok'); st.className='ok'; st.textContent=RH_ST.s;
-      sb.textContent=when; sb.style.color='var(--up)';
+      if (tile){ tile.classList.add('ok'); }
+      if (st){ st.className='ok'; st.textContent=RH_ST.s; }
+      if (sb){ sb.textContent=when; sb.style.color='var(--up)'; }
+      if (r2){ r2.classList.add('ok'); r2.textContent='\u00b7 SYNCED \u2713'; }
+      toast('Robinhood \u00b7 SYNCED \u2713 \u00b7 '+when, 5000, 'okk');
     } else {
       RH_ST = {s:'OFFLINE \u2717', sub:'no cloud link', cls:'', col:'var(--down)'};
-      st.className=''; st.style.color='var(--down)'; st.textContent=RH_ST.s;
-      sb.textContent=RH_ST.sub; sb.style.color='var(--down)';
+      if (st){ st.className=''; st.style.color='var(--down)'; st.textContent=RH_ST.s; }
+      if (sb){ sb.textContent=RH_ST.sub; sb.style.color='var(--down)'; }
+      if (r2){ r2.textContent='\u00b7 OFFLINE \u2717'; }
+      toast('Robinhood \u00b7 OFFLINE \u2717 \u00b7 no cloud link', 5000);
     }
   }, 900);
 }
@@ -578,6 +595,7 @@ $('symBtn').addEventListener('click',()=>{
 });
 
 $('strip').addEventListener('click', e => { if (e.target.closest('#rhTile')) rhCheck(); });
+$('rhHead').addEventListener('click', rhCheck);
 
 // ---- section nav highlight ----
 document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',function(){
