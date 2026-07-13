@@ -444,7 +444,10 @@ $('fresh').addEventListener('click', () => {
   const now = new Date(), ftx = $('freshTx');
   if (!SNAP_TS){ ftx.textContent='no data'; ftx.style.color='var(--down)'; $('fresh').className='red'; return; }
   const ageH = (now - SNAP_TS)/36e5;
+  const ct = new Date(now.toLocaleString('en-US',{timeZone:'America/Chicago'}));
+  const closedGap = (ct.getDay()===6 || ct.getDay()===0 || (ct.getDay()===1 && ct.getHours()<8));
   if (dayCT(now) === dayCT(SNAP_TS)){ $('fresh').className='green'; ftx.textContent=`FRESH ✓ ${fmt(SNAP_TS)}`; ftx.style.color='var(--up)'; }
+  else if (closedGap && ageH < 75){ $('fresh').className=''; ftx.textContent='MARKET CLOSED · showing '+fmt(SNAP_TS); ftx.style.color='var(--amber)'; }
   else if (ageH < 30){ $('fresh').className=''; ftx.textContent=`AGING · ${fmt(SNAP_TS)}`; ftx.style.color='var(--amber)'; }
   else { $('fresh').className='red'; ftx.textContent=`STALE ✗ · ${fmt(SNAP_TS)}`; ftx.style.color='var(--down)'; }
 });
