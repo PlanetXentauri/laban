@@ -66,6 +66,9 @@
   .rhstate2.ok{color:var(--up);text-shadow:0 0 10px rgba(38,208,124,.85)}
   .rhlogo.spinl{animation:rhspin .8s linear infinite;transform-origin:center}
   .toast.okk{border-color:rgba(38,208,124,.6)}
+  .spk{flex-shrink:0;width:84px;height:26px;margin:0 2px}
+  .spa .spk{width:104px;height:30px}
+  @media(max-width:430px){.spk{width:66px}.spa .spk{width:84px}}
   .regime{background:linear-gradient(90deg,#141a12,#10151e);border:1px solid #2a331d;border-radius:8px;
     padding:8px 12px;font-size:11.5px;margin-bottom:10px;line-height:1.4}
   .regime b{color:var(--amber);font-size:9px;letter-spacing:1px;display:block;margin-bottom:2px}
@@ -403,6 +406,38 @@ document.addEventListener('click', e => {
 });
 glossify(document.querySelector('.guide'));
 
+// ---- 90-day sparklines: tiny SVG trend charts, memoized per symbol ----
+const SPARKC = new Map();
+function spark(sym){
+  if (SPARKC.has(sym)) return SPARKC.get(sym);
+  const d = (SNAP && SNAP.spark && SNAP.spark[sym]) || null;
+  if (!d || d.length < 2){ SPARKC.set(sym,''); return ''; }
+  const W=84, H=26, P=2.5, n=d.length;
+  let mn=Infinity, mx=-Infinity;
+  for (const v of d){ if(v<mn)mn=v; if(v>mx)mx=v; }
+  const rng = (mx-mn) || 1;
+  const X = i => P + i*(W-2*P)/(n-1);
+  const Y = v => (H-P) - (v-mn)*(H-2*P)/rng;
+  const pt = i => X(i).toFixed(1)+','+Y(d[i]).toFixed(1);
+  let line=''; for(let i=0;i<n;i++) line += (i?' ':'')+pt(i);
+  // 10-day moving average overlay (quiet, behind)
+  let ma=''; const w=Math.min(10, Math.max(2, n>>2));
+  for(let i=w-1;i<n;i++){ let t=0; for(let j=i-w+1;j<=i;j++)t+=d[j];
+    ma += (ma?' ':'')+X(i).toFixed(1)+','+Y(t/w).toFixed(1); }
+  const up = d[n-1] >= d[0];
+  const c = up ? 'var(--up)' : 'var(--down)';
+  const ex=X(n-1).toFixed(1), ey=Y(d[n-1]).toFixed(1);
+  const svg = '<svg class="spk" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-hidden="true">'
+    +'<polygon points="'+X(0).toFixed(1)+','+(H-P)+' '+line+' '+ex+','+(H-P)+'" fill="'+c+'" opacity=".08"/>'
+    +(ma?'<polyline points="'+ma+'" fill="none" stroke="var(--muted)" stroke-width="1" opacity=".45"/>':'')
+    +'<polyline points="'+line+'" fill="none" stroke="'+c+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'
+    +'<circle cx="'+ex+'" cy="'+ey+'" r="3.2" fill="'+c+'" opacity=".22"/>'
+    +'<circle cx="'+ex+'" cy="'+ey+'" r="1.7" fill="'+c+'"/>'
+    +'</svg>';
+  SPARKC.set(sym, svg);
+  return svg;
+}
+
 let RH_ST = {s:'SYNC', sub:'tap to check', cls:'', col:'var(--muted)'};
 function rhTile(){
   return '<div class="idx rhx '+RH_ST.cls+'" id="rhTile" role="button" title="Check Robinhood Agentic sync">'+
@@ -464,6 +499,7 @@ function render(){
     <div class="warn">${esc(p.warn)}</div>` +
     (p.spot||[]).map(sp=>`<div class="spa"><div class="sprow">${scoreBox(sp.sc,sp.g,sp.cls)}
       <div><div class="tk">${esc(sp.sym)}</div><div class="nm">${esc(sp.nm)}</div></div>
+      <div style="flex:1"></div>${spark(sp.sym)}
       <div class="pxr"><div class="p">${esc(sp.px)}</div><div class="d ${sp.dd>0?'up':'down'}">${esc(sp.d)}</div></div></div>
       <div class="read"><b>THE ROBOT SAYS:</b> ${esc(sp.read)}</div></div>`).join('') +
     (p.groups||[]).map(gr=>{
@@ -473,6 +509,7 @@ function render(){
         `<div class="h"><div class="gchip ${CLS[r.cls]||'sC'}">${esc(r.sc)}</div>
           <div class="hmid"><div class="tk" style="font-size:12px">${esc(r.sym)} <span class="qty">${esc(r.qty)}</span></div>
             <div class="nm">${esc(r.nm)}</div>${r.note?`<div class="note">${esc(r.note)}</div>`:''}</div>
+          ${spark(r.sym)}
           <div class="hr"><div class="last">${esc(r.last)}</div>
             <div class="pcs ${String(r.day).startsWith('+')?'up':'down'}">${esc(r.day)} <span class="${String(r.pl).startsWith('+')?'up':'down'}">· ${esc(r.pl)}</span></div></div>
         </div>`).join('');
@@ -498,7 +535,7 @@ function render(){
 window.LB = {
   gotSnapshot(jsonStr, ts){
     try { SNAP = JSON.parse(jsonStr); } catch(e){ setSync('err','bad snapshot'); toast('Snapshot parse error'); return; }
-    SNAP_TS = ts; setSync('on','synced'); render();
+    SNAP_TS = ts; SPARKC.clear(); setSync('on','synced'); render();
     if (SNAP_TS) mastStatus('\u2713 synced \u00b7 data from '+fmt(SNAP_TS), 'var(--up)');
   },
   gotTicks(list){ TICKS = list || []; },
