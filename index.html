@@ -103,7 +103,7 @@
   .pxr{margin-left:auto;text-align:right;font-family:var(--mono)}
   .pxr .p{font-size:12.5px;font-weight:700}
   .pxr .d{font-size:9.5px}
-  .read{font-size:10.5px;line-height:1.45;background:#0b1018;border-left:3px solid var(--amber);padding:6px 9px;border-radius:0 6px 6px 0}
+  .read{position:relative;display:grid;align-content:center;font-size:10.5px;line-height:1.45;background:#0b1018;padding:6px 10px;border-radius:8px;margin-left:44px;min-height:50px}
   .read b{color:var(--amber)}
 
   .ghd{padding:5px 12px;font-size:9px;letter-spacing:1.2px;font-weight:700;background:#0b1018;border-bottom:1px solid #131a24}
@@ -138,9 +138,8 @@
   .prob{display:flex;align-items:center;gap:7px;font-size:9.5px;color:var(--muted);padding:0 12px;margin-bottom:7px}
   .pbar{flex:1;height:5px;border-radius:3px;background:rgba(255,87,101,.25);overflow:hidden}
   .pbar i{display:block;height:100%;background:var(--up);border-radius:3px}
-  .op{position:relative;font-size:10.5px;line-height:1.45;background:#0b1018;padding:6px 9px 6px 12px;border-radius:0 6px 6px 0;margin:0 12px 0 20px}
-  .op::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--amber);z-index:2}
-  .oppeek{position:absolute;right:calc(100% - 3px);bottom:1px;height:38px;z-index:1;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
+  .op{position:relative;display:grid;align-content:center;font-size:10.5px;line-height:1.45;background:#0b1018;padding:6px 10px;border-radius:8px;margin:0 12px 0 56px;min-height:50px}
+  .ideabot{position:absolute;right:calc(100% + 4px);bottom:0;height:50px;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
   .op b{color:var(--amber)}
   .antag{font-family:var(--mono);font-size:8px;color:var(--dim)}
 
@@ -330,7 +329,7 @@ function cardHTML(c){
     <div class="meta">${(c.meta||[]).map(m=>`<div class="m"><div class="k">${esc(m[0])}</div><div class="v2 ${MC[m[2]]||''}">${esc(m[1])}</div></div>`).join('')}</div>
     <div class="levels">${(c.levels||[]).map(l=>`<span class="lv">${esc(l)}</span>`).join('')}</div>
     <div class="prob"><span>MODEL LEAN</span><div class="pbar"><i style="width:${+c.lean||0}%"></i></div><span class="${c.lean>=55?'up':c.lean>=45?'a':'down'}">${+c.lean||0}% bullish</span></div>
-    <div class="op"><img class="oppeek" src="w.webp" alt=""><b>L.A.B.A.N.'S TAKE:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
+    <div class="op"><img class="ideabot" src="i.webp" alt=""><b>L.A.B.A.N.'S TAKE:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
   </div>`;
 }
 
@@ -500,7 +499,7 @@ function render(){
       <div><div class="tk">${esc(sp.sym)}</div><div class="nm">${esc(sp.nm)}</div></div>
       <div style="flex:1"></div>${spark(sp.sym)}
       <div class="pxr"><div class="p">${esc(sp.px)}</div><div class="d ${sp.dd>0?'up':'down'}">${esc(sp.d)}</div></div></div>
-      <div class="read"><b>L.A.B.A.N. SAYS:</b> ${esc(sp.read)}</div></div>`).join('') +
+      <div class="read"><img class="ideabot" src="i.webp" alt=""><b>L.A.B.A.N. SAYS:</b> ${esc(sp.read)}</div></div>`).join('') +
     (p.groups||[]).map(gr=>{
       const gc = gr.cls==='A'?'g':gr.cls==='B'?'b':gr.cls==='C'?'a':gr.cls==='D'?'r':'muted';
       const gt = gr.cls==='A' && gr.rows.length ? ' <img class="gthumb" src="t.webp" alt="">' : '';
