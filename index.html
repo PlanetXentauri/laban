@@ -106,6 +106,43 @@
   .read{position:relative;display:grid;align-content:center;font-size:10.5px;line-height:1.45;background:#0b1018;padding:6px 10px;border-radius:8px;margin-left:44px;min-height:50px}
   .read b{color:var(--amber)}
 
+  /* ---- L.A.B.A.N. Says expandable position brief ---- */
+  .pos{border-bottom:1px solid var(--line)}
+  .pos:last-child{border-bottom:none}
+  .pos .h{border-bottom:none}
+  .saysbar{display:flex;align-items:center;gap:7px;padding:3px 12px 9px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+  .spa .saysbar{padding-top:8px}
+  .saysbar .ibar{height:24px;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+  .saysbar .sl{font-size:9px;font-weight:800;letter-spacing:.7px;color:var(--amber);flex-shrink:0}
+  .saysbar .rchip{font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap;letter-spacing:.3px}
+  .saysbar .stars{font-size:9.5px;color:var(--amber);letter-spacing:1.5px;margin-left:auto;flex-shrink:0}
+  .saysbar .caret{font-size:11px;color:var(--muted);transition:transform .22s;flex-shrink:0;width:12px;text-align:center}
+  .saysbar.open .caret{transform:rotate(90deg);color:var(--amber)}
+  .saysbar:hover .sl{text-decoration:underline}
+  .rchip.g{background:rgba(38,208,124,.14);color:var(--up);border:1px solid rgba(38,208,124,.45)}
+  .rchip.y{background:rgba(255,176,32,.13);color:var(--amber);border:1px solid rgba(255,176,32,.45)}
+  .rchip.o{background:rgba(255,138,48,.14);color:#ff8a30;border:1px solid rgba(255,138,48,.45)}
+  .rchip.r{background:rgba(255,87,101,.13);color:var(--down);border:1px solid rgba(255,87,101,.45)}
+  .brief{padding:0 12px 13px;overflow:hidden;animation:bfade .26s ease}
+  @keyframes bfade{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+  .btags{font-size:15px;letter-spacing:3px;margin:2px 0 6px}
+  .bsec{margin:9px 0}
+  .bh{display:block;font-size:8.5px;letter-spacing:.9px;font-weight:800;color:var(--muted);margin-bottom:3px;text-transform:uppercase}
+  .brief p{font-size:11px;line-height:1.52;margin:0;color:var(--txt)}
+  .thz{font-size:11px;font-weight:700;padding:6px 10px;border-radius:7px;margin:9px 0;display:flex;gap:6px;align-items:center}
+  .thz.g{background:rgba(38,208,124,.09);color:var(--up);border:1px solid rgba(38,208,124,.28)}
+  .thz.y{background:rgba(255,176,32,.09);color:var(--amber);border:1px solid rgba(255,176,32,.28)}
+  .thz.o{background:rgba(255,138,48,.09);color:#ff8a30;border:1px solid rgba(255,138,48,.28)}
+  .thz.r{background:rgba(255,87,101,.09);color:var(--down);border:1px solid rgba(255,87,101,.28)}
+  .bcase{padding:7px 9px;border-radius:7px;margin:6px 0}
+  .bcase.bull{background:rgba(38,208,124,.06);border:1px solid rgba(38,208,124,.18)}
+  .bcase.bear{background:rgba(255,87,101,.06);border:1px solid rgba(255,87,101,.18)}
+  .bsec.cat p b,.thz b{font-weight:800}
+  .bsec.insight{background:#0b1018;border:1px solid #1a2432;border-radius:8px;padding:8px 10px}
+  .bsec.insight .bh{color:var(--violet)}
+  .bottom{margin-top:11px;padding:9px 11px;border-radius:8px;background:linear-gradient(90deg,rgba(255,176,32,.08),rgba(255,176,32,.02));border:1px solid rgba(255,176,32,.28);font-size:11px;line-height:1.5;color:var(--txt)}
+  .bottom b{color:var(--amber)}
+
   .ghd{padding:5px 12px;font-size:9px;letter-spacing:1.2px;font-weight:700;background:#0b1018;border-bottom:1px solid #131a24}
   .h{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #131a24}
   .h:last-child{border-bottom:none}
@@ -475,6 +512,43 @@ function rhCheck(){
     }
   }, 900);
 }
+const REMO = {g:'\u{1F7E2}', y:'\u{1F7E1}', o:'\u{1F7E0}', r:'\u{1F534}'};
+function briefHTML(sym, fallback){
+  const b = (SNAP && SNAP.briefs && SNAP.briefs[sym]) || null;
+  if(!b){
+    if(!fallback) return '';
+    return '<div class="saysbar" style="cursor:default"><img class="ibar" src="i.webp" alt="">'
+      + '<span class="sl">L.A.B.A.N. SAYS</span></div>'
+      + '<div class="brief" style="padding-top:2px"><p>'+esc(fallback)+'</p></div>';
+  }
+  const rc = (b.rate&&b.rate.c)||'y';
+  const rt = (b.rate&&b.rate.t)||'Hold';
+  const conf = Math.max(1, Math.min(5, b.conf||3));
+  const stars = '★'.repeat(conf)+'☆'.repeat(5-conf);
+  const tags = (b.tags||[]).join(' ');
+  const th = b.thesis ? '<div class="thz '+((b.thesis.c)||'y')+'">\u{1F4C8} '+esc(b.thesis.t)+'</div>' : '';
+  const cat = b.cat ? '<div class="bsec cat"><span class="bh">\u{1F4C5} Next Catalyst</span><p>'
+      +(b.cat.ic?b.cat.ic+' ':'')+esc(b.cat.t)+(b.cat.d?' · <b>'+esc(b.cat.d)+'</b>':'')+'</p></div>' : '';
+  const bar = '<div class="saysbar" role="button" aria-expanded="false" tabindex="0">'
+    + '<img class="ibar" src="i.webp" alt="">'
+    + '<span class="sl">L.A.B.A.N. Says</span>'
+    + '<span class="rchip '+rc+'">'+(REMO[rc]||'')+' '+esc(rt)+'</span>'
+    + '<span class="stars" title="confidence '+conf+' of 5">'+stars+'</span>'
+    + '<span class="caret">▸</span></div>';
+  const body = '<div class="brief" hidden>'
+    + (tags?'<div class="btags">'+tags+'</div>':'')
+    + '<div class="bsec"><span class="bh">\u{1F4F0} What’s New</span><p>'+esc(b.new||'')+'</p></div>'
+    + '<div class="bsec"><span class="bh">\u{1F3AF} Why It Matters</span><p>'+esc(b.matter||'')+'</p></div>'
+    + th
+    + '<div class="bcase bull"><span class="bh">\u{1F525} Bull Case</span><p>'+esc(b.bull||'')+'</p></div>'
+    + '<div class="bcase bear"><span class="bh">⚠️ Bear Case</span><p>'+esc(b.bear||'')+'</p></div>'
+    + (b.inst?'<div class="bsec"><span class="bh">\u{1F3E6} Institutional & Analyst</span><p>'+esc(b.inst)+'</p></div>':'')
+    + cat
+    + '<div class="bsec insight"><span class="bh">\u{1F9E0} L.A.B.A.N. Insight</span><p>'+esc(b.insight||'')+'</p></div>'
+    + (b.bottom?'<div class="bottom">\u{1F3AF} <b>Bottom Line:</b> '+esc(b.bottom)+'</div>':'')
+    + '</div>';
+  return bar+body;
+}
 function render(){
   if(!SNAP) return;
   const s = SNAP;
@@ -499,18 +573,18 @@ function render(){
       <div><div class="tk">${esc(sp.sym)}</div><div class="nm">${esc(sp.nm)}</div></div>
       <div style="flex:1"></div>${spark(sp.sym)}
       <div class="pxr"><div class="p">${esc(sp.px)}</div><div class="d ${sp.dd>0?'up':'down'}">${esc(sp.d)}</div></div></div>
-      <div class="read"><img class="ideabot" src="i.webp" alt=""><b>L.A.B.A.N. SAYS:</b> ${esc(sp.read)}</div></div>`).join('') +
+      ${briefHTML(sp.sym, sp.read)}</div>`).join('') +
     (p.groups||[]).map(gr=>{
       const gc = gr.cls==='A'?'g':gr.cls==='B'?'b':gr.cls==='C'?'a':gr.cls==='D'?'r':'muted';
       const gt = gr.cls==='A' && gr.rows.length ? ' <img class="gthumb" src="t.webp" alt="">' : '';
       return `<div class="ghd ${gc}">${esc(gr.h)}${gt}</div>` + gr.rows.map(r=>
-        `<div class="h"><div class="gchip ${CLS[r.cls]||'sC'}">${esc(r.sc)}</div>
+        `<div class="pos"><div class="h"><div class="gchip ${CLS[r.cls]||'sC'}">${esc(r.sc)}</div>
           <div class="hmid"><div class="tk" style="font-size:12px">${esc(r.sym)} <span class="qty">${esc(r.qty)}</span></div>
             <div class="nm">${esc(r.nm)}</div>${r.note?`<div class="note">${esc(r.note)}</div>`:''}</div>
           ${spark(r.sym)}
           <div class="hr"><div class="last">${esc(r.last)}</div>
             <div class="pcs ${String(r.day).startsWith('+')?'up':'down'}">${esc(r.day)} <span class="${String(r.pl).startsWith('+')?'up':'down'}">· ${esc(r.pl)}</span></div></div>
-        </div>`).join('');
+        </div>${briefHTML(r.sym)}</div>`).join('');
     }).join('');
 
   $('analB').innerHTML = (s.analyzer||[]).map(cardHTML).join('') || '<div class="dnone" style="padding:12px">No analyses yet — queue a symbol above.</div>';
@@ -630,6 +704,24 @@ $('symBtn').addEventListener('click',()=>{
 });
 
 $('strip').addEventListener('click', e => { if (e.target.closest('#rhTile')) rhCheck(); });
+function toggleBrief(bar){
+  const br = bar.nextElementSibling;
+  if(!br || !br.classList.contains('brief')) return;
+  if(br.hasAttribute('hidden')){ br.removeAttribute('hidden'); bar.classList.add('open'); bar.setAttribute('aria-expanded','true'); }
+  else { br.setAttribute('hidden',''); bar.classList.remove('open'); bar.setAttribute('aria-expanded','false'); }
+}
+document.addEventListener('click', e => {
+  const bar = e.target.closest && e.target.closest('.saysbar[role="button"]');
+  if(!bar) return;
+  if(e.target.closest('.gl')) return;
+  toggleBrief(bar);
+});
+document.addEventListener('keydown', e => {
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const bar = e.target.closest && e.target.closest('.saysbar[role="button"]');
+  if(!bar) return;
+  e.preventDefault(); toggleBrief(bar);
+});
 $('rhHead').addEventListener('click', rhCheck);
 
 // ---- section nav highlight ----
