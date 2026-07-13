@@ -188,7 +188,13 @@
   .peekwrap{position:relative;height:82px;margin-bottom:-9px;text-align:right;padding-right:0;line-height:0}
   .peek{height:82px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
   .mast{text-align:center;padding:calc(14px + env(safe-area-inset-top)) 0 10px;background:var(--bg)}
-  .mast img{height:170px;display:block;margin:-16px auto -14px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:filter .3s}
+  .mbwrap{position:relative;display:inline-block;line-height:0;margin:-16px 0 -14px}
+  .mast img{height:170px;display:block;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:filter .3s}
+  .wink{position:absolute;left:56.3%;top:34%;width:10%;height:10%;opacity:0;pointer-events:none}
+  .wink::before{content:'';position:absolute;inset:0;background:rgb(59,60,61);border-radius:50%}
+  .wink::after{content:'';position:absolute;left:14%;right:14%;top:0;bottom:36%;border-bottom:3px solid #e8ca2c;border-radius:50%}
+  .mbwrap.winking .wink{animation:winkA .9s ease}
+  @keyframes winkA{0%,100%{opacity:0}20%,78%{opacity:1}}
   .mast img:active{transform:scale(.96)}
   .mast img.think{animation:botnod .75s ease}
   @keyframes botnod{0%,100%{transform:none}30%{transform:translateY(-7px) rotate(-2deg)}60%{transform:translateY(2px) rotate(1.5deg)}}
@@ -216,7 +222,7 @@
 </head>
 <body>
 
-<div class="mast"><img id="mastBot" src="icon-512.png" alt="L.A.B.A.N. robot — tap to check for fresh data"><div class="mastWord gsync" id="mastWord">L.A.B.A.N.</div><div class="mastSub">LIVE AI BOT ASSET NAVIGATOR</div><div class="mastInfo" id="mastInfo">tap me to check for fresh data</div></div>
+<div class="mast"><span class="mbwrap"><img id="mastBot" src="icon-512.png" alt="L.A.B.A.N. robot — tap to check for fresh data"><span class="wink"></span></span><div class="mastWord gsync" id="mastWord">L.A.B.A.N.</div><div class="mastSub">LIVE AI BOT ASSET NAVIGATOR</div><div class="mastInfo" id="mastInfo">tap me to check for fresh data</div></div>
 <header>
   <div class="hrow">
     <button id="fresh" title="Check data freshness">◈</button>
@@ -471,6 +477,7 @@ $('fresh').addEventListener('click', applyFresh);
 const mb = $('mastBot');
 if (mb) mb.addEventListener('click', () => {
   mb.classList.remove('think'); void mb.offsetWidth; mb.classList.add('think');
+  const ww = mb.parentElement; ww.classList.remove('winking'); void ww.offsetWidth; ww.classList.add('winking');
   mastStatus('\u2699 checking the cloud\u2026', 'var(--amber)');
   setTimeout(applyFresh, 780);
 });
