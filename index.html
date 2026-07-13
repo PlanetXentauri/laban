@@ -138,7 +138,9 @@
   .prob{display:flex;align-items:center;gap:7px;font-size:9.5px;color:var(--muted);padding:0 12px;margin-bottom:7px}
   .pbar{flex:1;height:5px;border-radius:3px;background:rgba(255,87,101,.25);overflow:hidden}
   .pbar i{display:block;height:100%;background:var(--up);border-radius:3px}
-  .op{font-size:10.5px;line-height:1.45;background:#0b1018;border-left:3px solid var(--amber);padding:6px 9px;border-radius:0 6px 6px 0;margin:0 12px}
+  .op{position:relative;font-size:10.5px;line-height:1.45;background:#0b1018;padding:6px 9px 6px 12px;border-radius:0 6px 6px 0;margin:0 12px 0 20px}
+  .op::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--amber);z-index:2}
+  .oppeek{position:absolute;right:calc(100% - 3px);bottom:1px;height:38px;z-index:1;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
   .op b{color:var(--amber)}
   .antag{font-family:var(--mono);font-size:8px;color:var(--dim)}
 
@@ -201,8 +203,6 @@
   @keyframes splp{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
   #loading .splt{font-size:18px;letter-spacing:4px;font-weight:800;color:var(--txt);font-family:var(--sans)}
   #loading .spls{font-size:8.5px;letter-spacing:2.5px;color:var(--amber);font-weight:700;margin-top:-8px}
-  .peekwrap{position:relative;height:82px;margin-bottom:-9px;text-align:right;padding-right:0;line-height:0}
-  .peek{height:82px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
   .mast{text-align:center;padding:calc(14px + env(safe-area-inset-top)) 0 10px;background:var(--bg)}
   .mbwrap{position:relative;display:inline-block;line-height:0;margin:-16px 0 -14px}
   .mast img{height:170px;display:block;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:filter .3s}
@@ -261,7 +261,6 @@
 <div id="loading"><img class="spl" src="icon-512.png" alt="L.A.B.A.N."><div class="splt">L.A.B.A.N.</div><div class="spls">LIVE AI BOT ASSET NAVIGATOR</div><div id="splc">◈ connecting to the cloud…</div></div>
 <main id="app" style="display:none">
   <div class="strip" id="strip"></div>
-  <div class="peekwrap"><img class="peek" src="w.webp" alt=""></div>
   <div class="regime" id="regime"></div>
   <details class="guide"><summary>🤔 NEW HERE? TAP FOR THE 60-SECOND TOUR</summary><div class="gb">
     <p><b>What this app does:</b> every morning L.A.B.A.N. reads the market news, checks your Robinhood account, and turns it all into simple report cards — so you can see what deserves your attention without wading through jargon.</p>
@@ -331,7 +330,7 @@ function cardHTML(c){
     <div class="meta">${(c.meta||[]).map(m=>`<div class="m"><div class="k">${esc(m[0])}</div><div class="v2 ${MC[m[2]]||''}">${esc(m[1])}</div></div>`).join('')}</div>
     <div class="levels">${(c.levels||[]).map(l=>`<span class="lv">${esc(l)}</span>`).join('')}</div>
     <div class="prob"><span>MODEL LEAN</span><div class="pbar"><i style="width:${+c.lean||0}%"></i></div><span class="${c.lean>=55?'up':c.lean>=45?'a':'down'}">${+c.lean||0}% bullish</span></div>
-    <div class="op"><b>L.A.B.A.N.'S TAKE:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
+    <div class="op"><img class="oppeek" src="w.webp" alt=""><b>L.A.B.A.N.'S TAKE:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
   </div>`;
 }
 
