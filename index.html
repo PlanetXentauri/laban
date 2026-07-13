@@ -329,7 +329,7 @@ function cardHTML(c){
     <div class="meta">${(c.meta||[]).map(m=>`<div class="m"><div class="k">${esc(m[0])}</div><div class="v2 ${MC[m[2]]||''}">${esc(m[1])}</div></div>`).join('')}</div>
     <div class="levels">${(c.levels||[]).map(l=>`<span class="lv">${esc(l)}</span>`).join('')}</div>
     <div class="prob"><span>MODEL LEAN</span><div class="pbar"><i style="width:${+c.lean||0}%"></i></div><span class="${c.lean>=55?'up':c.lean>=45?'a':'down'}">${+c.lean||0}% bullish</span></div>
-    <div class="op"><img class="ideabot" src="i.webp" alt=""><b>L.A.B.A.N.'S TAKE:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
+    <div class="op"><img class="ideabot" src="i.webp" alt=""><b>L.A.B.A.N. SAYS:</b> ${esc(c.op)} ${c.tag?`<span class="antag">· ${esc(c.tag)}</span>`:''}</div>
   </div>`;
 }
 
