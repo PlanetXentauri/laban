@@ -187,8 +187,16 @@
   #loading .spls{font-size:8.5px;letter-spacing:2.5px;color:var(--amber);font-weight:700;margin-top:-8px}
   .peekwrap{position:relative;height:82px;margin-bottom:-9px;text-align:right;padding-right:0;line-height:0}
   .peek{height:82px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
-  .mast{text-align:center;padding:calc(14px + env(safe-area-inset-top)) 0 4px;background:var(--bg)}
-  .mast img{height:170px;display:block;margin:-16px auto -18px}
+  .mast{text-align:center;padding:calc(14px + env(safe-area-inset-top)) 0 10px;background:var(--bg)}
+  .mast img{height:170px;display:block;margin:-16px auto -14px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:filter .3s}
+  .mast img:active{transform:scale(.96)}
+  .mast img.think{animation:botnod .75s ease}
+  @keyframes botnod{0%,100%{transform:none}30%{transform:translateY(-7px) rotate(-2deg)}60%{transform:translateY(2px) rotate(1.5deg)}}
+  .gsync{transition:color .5s,text-shadow .5s}
+  .gsync.ok{color:var(--up)!important;text-shadow:0 0 12px rgba(38,208,124,.8),0 0 28px rgba(38,208,124,.35)}
+  .mastWord{font-size:21px;letter-spacing:5px;font-weight:800;color:var(--txt);line-height:1.1}
+  .mastSub{font-size:8px;letter-spacing:2.6px;color:var(--amber);font-weight:700;margin-top:2px}
+  .mastInfo{font-family:var(--mono);font-size:10.5px;margin-top:8px;color:var(--muted);min-height:14px;transition:color .3s;padding:0 12px}
   .mhead{height:26px;margin-left:7px;vertical-align:middle}
   .thumbA{height:36px;margin-left:2px;filter:drop-shadow(0 2px 6px rgba(38,208,124,.35))}
   .gthumb{height:22px;vertical-align:middle;margin-left:5px}
@@ -208,12 +216,12 @@
 </head>
 <body>
 
-<div class="mast"><img src="icon-512.png" alt="L.A.B.A.N. robot mascot"></div>
+<div class="mast"><img id="mastBot" src="icon-512.png" alt="L.A.B.A.N. robot — tap to check for fresh data"><div class="mastWord gsync" id="mastWord">L.A.B.A.N.</div><div class="mastSub">LIVE AI BOT ASSET NAVIGATOR</div><div class="mastInfo" id="mastInfo">tap me to check for fresh data</div></div>
 <header>
   <div class="hrow">
     <button id="fresh" title="Check data freshness">◈</button>
     <div class="brand">
-      <h1>L.A.B.A.N.</h1>
+      <h1 class="gsync">L.A.B.A.N.</h1>
       <div class="mean">LIVE AI BOT ASSET NAVIGATOR</div>
     </div>
     <div class="hstat">
@@ -278,7 +286,9 @@ function toast(msg, ms, cls){
 function setSync(state, tx){
   const d = $('sync'); d.className = 'dot' + (state==='on'?' on':state==='err'?' err':'');
   $('syncTx').textContent = tx;
+  document.querySelectorAll('.gsync').forEach(e=>e.classList.toggle('ok', state==='on'));
 }
+function mastStatus(txt, color){ const m = $('mastInfo'); if(m){ m.textContent = txt; m.style.color = color || 'var(--muted)'; } }
 function reveal(){ $('loading').style.display='none'; $('app').style.display='block'; }
 
 function scoreBox(sc,g,cls){ return `<div class="score ${CLS[cls]||'sC'}"><span class="n">${esc(sc)}</span><span class="g2">${esc(g)}</span></div>`; }
@@ -428,6 +438,7 @@ window.LB = {
   gotSnapshot(jsonStr, ts){
     try { SNAP = JSON.parse(jsonStr); } catch(e){ setSync('err','bad snapshot'); toast('Snapshot parse error'); return; }
     SNAP_TS = ts; setSync('on','synced'); render();
+    if (SNAP_TS) mastStatus('\u2713 synced \u00b7 data from '+fmt(SNAP_TS), 'var(--up)');
   },
   gotTicks(list){ TICKS = list || []; },
   syncState(st, tx){ setSync(st, tx); if(st==='err' && !SNAP){ const c=$('splc'); if(c) c.textContent='◈ '+tx; } }
@@ -440,16 +451,28 @@ setTimeout(()=>{ if(!SNAP){ reveal(); setSync('err','offline / no data');
 // ---- freshness button ----
 const fmt = d => d.toLocaleString('en-US',{timeZone:'America/Chicago',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) + ' CT';
 const dayCT = d => d.toLocaleDateString('en-US',{timeZone:'America/Chicago'});
-$('fresh').addEventListener('click', () => {
-  const now = new Date(), ftx = $('freshTx');
-  if (!SNAP_TS){ ftx.textContent='no data'; ftx.style.color='var(--down)'; $('fresh').className='red'; return; }
+function freshVerdict(){
+  const now = new Date();
+  if (!SNAP_TS) return {cls:'red', tx:'no data yet', col:'var(--down)'};
   const ageH = (now - SNAP_TS)/36e5;
   const ct = new Date(now.toLocaleString('en-US',{timeZone:'America/Chicago'}));
   const closedGap = (ct.getDay()===6 || ct.getDay()===0 || (ct.getDay()===1 && ct.getHours()<8));
-  if (dayCT(now) === dayCT(SNAP_TS)){ $('fresh').className='green'; ftx.textContent=`FRESH ✓ ${fmt(SNAP_TS)}`; ftx.style.color='var(--up)'; }
-  else if (closedGap && ageH < 75){ $('fresh').className=''; ftx.textContent='MARKET CLOSED · showing '+fmt(SNAP_TS); ftx.style.color='var(--amber)'; }
-  else if (ageH < 30){ $('fresh').className=''; ftx.textContent=`AGING · ${fmt(SNAP_TS)}`; ftx.style.color='var(--amber)'; }
-  else { $('fresh').className='red'; ftx.textContent=`STALE ✗ · ${fmt(SNAP_TS)}`; ftx.style.color='var(--down)'; }
+  if (dayCT(now) === dayCT(SNAP_TS)) return {cls:'green', tx:'FRESH \u2713 '+fmt(SNAP_TS), col:'var(--up)'};
+  if (closedGap && ageH < 75) return {cls:'', tx:'MARKET CLOSED \u00b7 showing '+fmt(SNAP_TS), col:'var(--amber)'};
+  if (ageH < 30) return {cls:'', tx:'AGING \u00b7 '+fmt(SNAP_TS), col:'var(--amber)'};
+  return {cls:'red', tx:'STALE \u2717 \u00b7 '+fmt(SNAP_TS), col:'var(--down)'};
+}
+function applyFresh(){
+  const v = freshVerdict(), ftx = $('freshTx');
+  $('fresh').className = v.cls; ftx.textContent = v.tx; ftx.style.color = v.col;
+  mastStatus(v.tx, v.col);
+}
+$('fresh').addEventListener('click', applyFresh);
+const mb = $('mastBot');
+if (mb) mb.addEventListener('click', () => {
+  mb.classList.remove('think'); void mb.offsetWidth; mb.classList.add('think');
+  mastStatus('\u2699 checking the cloud\u2026', 'var(--amber)');
+  setTimeout(applyFresh, 780);
 });
 
 // ---- analyzer typeahead + device-local queue (localStorage, lb_ prefix) ----
