@@ -334,7 +334,7 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<'
 const CLS = {A:'sA',B:'sB',C:'sC',D:'sD',F:'sF'};
 const LBCLS = {r:'lr',v:'lv2',a:'la',g:'lg',b:'lb2'};
 const MC = {b:'b',r:'r',a:'a',g:'g','':''};
-let SNAP = null, SNAP_TS = null, TICKS = [];
+let SNAP = null, SNAP_TS = null, SNAP_BUILT = 0, TICKS = [];
 
 function toast(msg, ms, cls){
   const t = document.createElement('div'); t.className='toast'+(cls?' '+cls:''); t.textContent = msg;
@@ -605,9 +605,13 @@ function render(){
 
 // hooks the Firebase module calls into
 window.LB = {
-  gotSnapshot(jsonStr, ts){
-    try { SNAP = JSON.parse(jsonStr); } catch(e){ setSync('err','bad snapshot'); toast('Snapshot parse error'); return; }
-    SNAP_TS = ts; SPARKC.clear(); setSync('on','synced'); render();
+  gotSnapshot(jsonStr, ts, source){
+    let obj; try { obj = JSON.parse(jsonStr); } catch(e){ setSync('err','bad snapshot'); toast('Snapshot parse error'); return; }
+    const built = obj.builtAt ? Date.parse(obj.builtAt) : (ts ? +ts : Date.now());
+    if (SNAP && SNAP_BUILT && built <= SNAP_BUILT) return;
+    SNAP = obj; SNAP_BUILT = built;
+    SNAP_TS = obj.builtAt ? new Date(built) : ts;
+    SPARKC.clear(); setSync('on','synced'); render();
     if (SNAP_TS) mastStatus('\u2713 synced \u00b7 data from '+fmt(SNAP_TS), 'var(--up)');
   },
   gotTicks(list){ TICKS = list || []; },
@@ -617,6 +621,18 @@ window.LB = {
 // offline fallback: never leave the user on a blank screen
 setTimeout(()=>{ if(!SNAP){ reveal(); setSync('err','offline / no data');
   toast('No cloud data yet — sections fill when sync connects'); } }, 6000);
+
+// ---- GitHub snapshot source: updates even when the live cloud link is down ----
+const GH_SNAP = 'https://raw.githubusercontent.com/PlanetXentauri/laban/main/snapshot.json';
+async function pollGitHub(){
+  try{
+    const r = await fetch(GH_SNAP + '?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) return;
+    window.LB.gotSnapshot(await r.text(), null, 'github');
+  }catch(e){}
+}
+pollGitHub();
+setInterval(pollGitHub, 120000);
 
 // ---- freshness button ----
 const fmt = d => d.toLocaleString('en-US',{timeZone:'America/Chicago',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}) + ' CT';
@@ -750,7 +766,7 @@ try{
   onSnapshot(query(collection(db,'lb_snapshots'), orderBy('createdAt','desc'), limit(1)), snap => {
     if (snap.empty){ window.LB.syncState('err','no data in cloud yet'); return; }
     const d = snap.docs[0].data();
-    window.LB.gotSnapshot(d.json, d.createdAt && d.createdAt.toDate ? d.createdAt.toDate() : null);
+    window.LB.gotSnapshot(d.json, d.createdAt && d.createdAt.toDate ? d.createdAt.toDate() : null, 'cloud');
   }, err => window.LB.syncState('err','sync error: '+err.code));
 
   onSnapshot(doc(db,'lb_meta','ticks'), dd => {
