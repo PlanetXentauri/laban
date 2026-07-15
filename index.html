@@ -611,6 +611,7 @@ window.LB = {
     if (SNAP && SNAP_BUILT && built <= SNAP_BUILT) return;
     SNAP = obj; SNAP_BUILT = built;
     SNAP_TS = obj.builtAt ? new Date(built) : ts;
+    RH_ST = {s:'SYNCED \u2713', sub: SNAP_TS ? 'RH data \u00b7 '+fmt(SNAP_TS) : 'live link up', cls:'ok', col:'var(--up)'};
     SPARKC.clear(); setSync('on','synced'); render();
     if (SNAP_TS) mastStatus('\u2713 synced \u00b7 data from '+fmt(SNAP_TS), 'var(--up)');
   },
