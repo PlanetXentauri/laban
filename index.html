@@ -473,6 +473,88 @@ function spark(sym){
   return svg;
 }
 
+
+// ---- LIVE QUOTES: every robot tap pulls fresh prices straight from the exchange feed ----
+const LQ_PROXY = u => 'https://corsproxy.io/?url=' + encodeURIComponent(u);
+function lqNum(s){ return parseFloat(String(s).replace(/[$,]/g,'')) || 0; }
+function lqMoney(v){ return '$' + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function lqPx(v){ return v>=1 ? lqMoney(v) : '$'+v.toFixed(3); }
+function lqPct(a,b){ if(!b) return '+0.0%'; const p=(a/b-1)*100; return (p>=0?'+':'−')+Math.abs(p).toFixed(1)+'%'; }
+function lqTime(){ return new Date().toLocaleTimeString('en-US',{timeZone:'America/Chicago',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})+' CT'; }
+async function lqFetch(syms){
+  const out={};
+  for(let i=0;i<syms.length;i+=20){
+    const u='https://query1.finance.yahoo.com/v7/finance/spark?symbols='+syms.slice(i,i+20).join(',')+'&range=1d&interval=15m';
+    const r=await fetch(LQ_PROXY(u),{cache:'no-store'});
+    if(!r.ok) throw new Error('feed http '+r.status);
+    const j=await r.json();
+    for(const x of (j.spark&&j.spark.result)||[]){
+      const m=x.response&&x.response[0]&&x.response[0].meta;
+      if(m&&m.regularMarketPrice!=null) out[x.symbol]={p:m.regularMarketPrice, pc:m.chartPreviousClose||m.previousClose||m.regularMarketPrice};
+    }
+  }
+  return out;
+}
+async function liveRefresh(){
+  if(!SNAP || window.__LQBUSY) return false;
+  window.__LQBUSY=true;
+  document.querySelectorAll('.rhlogo').forEach(l=>l.classList.add('spinl'));
+  try{
+    const p=SNAP.portfolio||{};
+    const rows=(p.groups||[]).flatMap(g=>g.rows);
+    const syms=[...new Set(rows.map(r=>r.sym).concat(['SPY','QQQ','DIA','GLD']))];
+    const q=await lqFetch(syms);
+    let btc=null; try{ const b=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',{cache:'no-store'}).then(r=>r.json()); btc=b.bitcoin; }catch(e){}
+    let equity=0, cost=0, got=0;
+    for(const r of rows){
+      const m=String(r.qty).match(/([\d.]+)\s*@\s*\$([\d,.]+)/); const d=q[r.sym];
+      if(!m||!d) continue; got++;
+      const qty=parseFloat(m[1]), avg=lqNum(m[2]), last=d.p, val=qty*last;
+      equity+=val; cost+=qty*avg;
+      r.last=lqPx(last)+' · '+lqMoney(val);
+      r.day=lqPct(last,d.pc)+' today';
+      r.pl=lqPct(last,avg);
+      r.nm=String(r.nm).replace(/— \$[\d,.]+ val/,'— '+lqMoney(val)+' val');
+      if(SNAP.spark&&SNAP.spark[r.sym]&&SNAP.spark[r.sym].length) SNAP.spark[r.sym][SNAP.spark[r.sym].length-1]=+last.toPrecision(4);
+    }
+    if(!got) throw new Error('no symbols matched');
+    for(const sp of (p.spot||[])){
+      const d=q[sp.sym]; if(!d) continue;
+      sp.px=lqPx(d.p); sp.d=lqPct(d.p,d.pc)+' today'; sp.dd=d.p>=d.pc?1:-1;
+      const m=String(sp.nm).match(/([\d.]+)\s*sh\s*@\s*\$([\d,.]+)/);
+      if(m&&equity>0){ const share=Math.round(parseFloat(m[1])*d.p/equity*100); sp.nm=String(sp.nm).replace(/\d+% of equity/, share+'% of equity'); }
+    }
+    const cash=lqNum(p.cash);
+    p.equity=lqMoney(equity); p.total=lqMoney(equity+cash);
+    if(cost>0){ const pl=equity-cost, sg=pl>=0?'+':'−';
+      p.pl=sg+'$'+Math.abs(pl).toFixed(2)+' · '+sg+Math.abs(pl/cost*100).toFixed(1)+'%'; }
+    for(const ix of (SNAP.indices||[])){
+      if(ix.k==='BTC/USD'){ if(btc&&btc.usd){ ix.v=Math.round(btc.usd).toLocaleString('en-US'); const c=btc.usd_24h_change||0; ix.c=(c>=0?'+':'−')+Math.abs(c).toFixed(1)+'%'; ix.d=c>=0?1:-1; } continue; }
+      const d=q[ix.k]; if(!d) continue;
+      ix.v=d.p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+      ix.c=lqPct(d.p,d.pc); ix.d=d.p>=d.pc?1:-1;
+    }
+    const t=lqTime();
+    const dstr=new Date().toLocaleDateString('en-US',{timeZone:'America/Chicago',weekday:'short',month:'short',day:'numeric',year:'numeric'}).toUpperCase().replace(/,/g,'');
+    SNAP.session=dstr+' · LIVE QUOTES · '+t;
+    SNAP.builtAt=new Date().toISOString();
+    SNAP_TS=new Date(); SNAP_BUILT=Date.now();
+    RH_ST={s:'LIVE ✓', sub:'quotes · '+t, cls:'ok', col:'var(--up)'};
+    SPARKC.clear(); setSync('on','live'); render();
+    mastStatus('⚡ LIVE ✓ · '+t, 'var(--up)');
+    toast('⚡ Live quotes pulled · '+got+' stocks · '+t, 4000, 'okk');
+    return true;
+  }catch(e){
+    toast('Live quote feed unreachable right now — showing last synced data', 5000);
+    return false;
+  }finally{
+    window.__LQBUSY=false;
+    document.querySelectorAll('.rhlogo').forEach(l=>l.classList.remove('spinl'));
+  }
+}
+setTimeout(()=>{ liveRefresh(); }, 2500);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && SNAP_TS && (Date.now()-SNAP_TS)>5*60*1000) liveRefresh(); });
+
 let RH_ST = {s:'SYNC', sub:'tap to check', cls:'', col:'var(--muted)'};
 function rhTile(){
   return '<div class="idx rhx '+RH_ST.cls+'" id="rhTile" role="button" title="Check Robinhood Agentic sync">'+
@@ -491,6 +573,7 @@ function rhCheck(){
   if (sb){ sb.textContent='checking cloud\u2026'; sb.style.color='var(--amber)'; }
   if (r2){ r2.classList.remove('ok'); r2.textContent='\u00b7 \u2026'; }
   if (window.LBC && window.LBC.rhPing) window.LBC.rhPing();
+  liveRefresh();
   setTimeout(()=>{
     window.__RHBUSY = false;
     document.querySelectorAll('.rhlogo').forEach(l=>l.classList.remove('spinl'));
@@ -659,8 +742,8 @@ const mb = $('mastBot');
 if (mb) mb.addEventListener('click', () => {
   mb.classList.remove('think'); void mb.offsetWidth; mb.classList.add('think');
   const ww = mb.parentElement; ww.classList.remove('winking'); void ww.offsetWidth; ww.classList.add('winking');
-  mastStatus('\u2699 checking the cloud\u2026', 'var(--amber)');
-  setTimeout(applyFresh, 780);
+  mastStatus('\u26a1 pulling live quotes\u2026', 'var(--amber)');
+  liveRefresh().then(()=>{ const v=freshVerdict(), ftx=$('freshTx'); $('fresh').className=v.cls; ftx.textContent=v.tx; ftx.style.color=v.col; });
 });
 
 // ---- analyzer typeahead + device-local queue (localStorage, lb_ prefix) ----
